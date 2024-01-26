@@ -354,34 +354,35 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         shared.processing_message = "Taking a moment to save long-term memories..."
         
         question = bot_dream_persona + "[MEMORY:{'" + input_to_summarize + "'}] " + thinking_statement
-        print('-----------memory question-----------')
-        print(question)
-        print('-----------/memory question-----------')
+        if params['verbose'] == True:
+            print('-----------memory question-----------')
+            print(question)
+            print('-----------/memory question-----------')
         response_text = []
         shared.processing_message = "Taking a moment to save long-term memories..."
         
         for response in generate_reply(question, state, stopping_strings='"<END>"', is_chat=False, escape_html=False, for_ui=False):
-            print(str(response))
+            #print(str(response))
             response_text.append(response) 
             
 
         
-        print("--------GENERATE REPLY---------------------------------------------------------------")
+        #print("--------GENERATE REPLY---------------------------------------------------------------")
         
         
         #check the ltm to make sure the response from the llm did not go wacky. 
         #need to think about the best way to check the response. For now at least check 
         #if the llm returned something more then 100 chars.
-        print("Dream Length Check:" + str(len(response_text[-1])))
+        #print("Dream Length Check:" + str(len(response_text[-1])))
         if len(str(response_text[-1])) > 100:
             dream_check = 1
 
 
-        print("Dream Check:" + str(dream_check))
+        #print("Dream Check:" + str(dream_check))
 
         if dream_check == 1:
             for row in mems_to_review:
-                print("Updating memory to saved to LTM." + str(row[0]))
+                #print("Updating memory to saved to LTM." + str(row[0]))
                 stm_user.update_mem_saved_to_longterm(row[0])
         
         #assume the string is the summary of the memories.
