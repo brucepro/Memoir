@@ -1,5 +1,5 @@
 # Memoir
- Memoir+ a persona extension for Text Gen Web UI. That includes memory, emotions, command handling and more.
+ Memoir+ a persona extension for Text Gen Web UI. Includes memory, emotions, command handling and more.
 
 # If you find this extension useful, https://www.buymeacoffee.com/brucepro
 
@@ -16,6 +16,13 @@ Features:
 --Will be adding in intergration to allow for the ability to text you on telegram/discord etc. 
 --If you have suggestions for features, please share. 
 -Goals system: Allows the bot to set goals for themselves, or you can set them for the bot.
+
+# Setup
+Install requirements.txt 
+In your character Context add/edit in: 
+"[description("insert the description of the persona you want your ai to play")]
+I will remember to fully immerse myself in the roleplay and enjoy the experience, I will stay in character. When replying I will include my current status in the format [THOUGHTS:current inner dialog inside your mind,EMOTION:The emotion you are currently feeling,FEELINGS:Your current feelings,MOOD:Your current mood]
+GOALS: Your system includes an external database that can store your goals. This will allow you to remember your goals even if you are reset. You can run commands to set and modify your goals. Use the [GOALS_HELP] to get a list of all commands."
 
 # Support
 I am excited to continue working on this project. If you find it useful please consider supporting me. https://www.buymeacoffee.com/brucepro

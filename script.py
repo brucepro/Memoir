@@ -297,7 +297,6 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         mems_to_review = dream.get_short_term_memories_not_indexed(int(params['ego_summary_limit']))
         params['dream_mode'] = 1
         bot_dream_persona = "Ego:[A subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. It focuses on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]"
-        #bot_dream_persona = "Ego:[You are the subconscious Ego that reviews short term memories and creates a summary.]"
         
         thinking_statement = "Generate a summary of the main topics discussed. <START>"
       
@@ -323,7 +322,11 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 roleplay = False
             if int(row[6]) == 1:
                 roleplay = True
-            memory_text.append(f"{row[5]}: {row[1]} [Is_roleplay:{roleplay}]")
+            if roleplay == True:
+                memory_text.append(f"{row[5]}: {row[1]} [Is_roleplay:{roleplay}]")
+            else:
+                memory_text.append(f"{row[5]}: {row[1]}")
+            
             #print("MEMORY TEXT:")
             #print(str(memory_text))
             # Store people and other variables from the memory data
@@ -428,10 +431,11 @@ def setup():
     """
     Gets executed only once, when the extension is imported.
     """
-    ubuntudockerfile = os.path.join(current_dir, "ubuntu-docker-compose.yml")
+    #ubuntudockerfile = os.path.join(current_dir, "ubuntu-docker-compose.yml")
     qdrantdockerfile = os.path.join(current_dir, "qdrant-docker-compose.yml")
         
     # run the service
+    '''
     try:
         docker_ubuntu_container = DockerClient(compose_files=[ubuntudockerfile])
         docker_ubuntu_container.compose.up(detach=True)
@@ -439,6 +443,7 @@ def setup():
         print(f"Running the ubuntu docker service...you can modify this in the ubuntu-docker-compose.yml: {ubuntudockerfile}")
     except Exception as e:
         print(f": Error {ubuntudockerfile}: {e}")
+    '''
     try:
         docker_qdrant = DockerClient(compose_files=[qdrantdockerfile])
         docker_qdrant.compose.up(detach=True)
@@ -450,7 +455,6 @@ def setup():
 
 
 def update_dreammode():
-    print("Updating Dream Mode - DreamMode is currently:" + str(params['dream_mode']))
     print("-----Params-----")
     print(str(params))
     pass
@@ -462,12 +466,13 @@ def _get_current_memory_text() -> str:
     info = str(available_characters)
     return info
 
-def delete_everything(character_name):
+def delete_everything():
     print("Deleting Everything!")
-    if character_name == "None":
+    if params['current_selected_character'] == None:
         print("No persona selected.")
     else:
-        print("Deleting" + str(character_name))
+        #print("Deleting" + str(character_name))
+        character_name = params['current_selected_character']
         databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
         ltm = LTM(character_name, params['verbose'], params['ltm_limit'], address=params['qdrant_address'])
         ltm.delete_vector_db()
@@ -499,7 +504,7 @@ def ui():
                 1, 100,
                 step=1,
                 value=params['ltm_limit'],
-                label='Long Term Memory Result Count',
+                label='Long Term Memory Result Count (How many memories to return from LTM into context. Does this number for both bot memories and user memories. So at 5, it recovers 10 memories.)',
                 )
             ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
         with gr.Row():
@@ -507,50 +512,26 @@ def ui():
                 1, 100,
                 step=1,
                 value=params['ego_summary_limit'],
-                label='Number of Short Term Memories to use for Ego Summary to LTM',
+                label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
                 )
             ego_summary_limit.change(lambda x: params.update({'ego_summary_limit': x}), ego_summary_limit, None)
         
         with gr.Row():
-            startdreammode = gr.Button("Start Dream Mode")
-            startdreammode.click(lambda x: params.update({'dream_mode': 1}), inputs=startdreammode, outputs=None)
-            
-            stopdreammode = gr.Button("Stop Dream Mode")
-            stopdreammode.click(lambda x: params.update({'dream_mode': 0}), inputs=stopdreammode, outputs=None)
-            
-            cstartdreammode = gr.Button("Check Dream Mode")
+            cstartdreammode = gr.Button("List Params in debug window")
             cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
         with gr.Row():
-            current_emotion = gr.Slider(
-                -1, 1,
-                step=.001,
-                value=params['polarity_score'],
-                label='Current Agent Emotional State',
-                )
-            current_emotion.change(lambda x: params.update({'polarity_score': x}), current_emotion, None)
-        with gr.Row():
-            activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
+            activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles* (Not Implemented yet.)')
             activate_narrator.change(lambda x: params.update({"activate_narrator": x}), activate_narrator, None)
-            activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay')
+            activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
             activate_roleplay.change(lambda x: params.update({"is_roleplay": x}), activate_roleplay, None)
-        with gr.Row():
-            current_memory = gr.Textbox(
-                value=_get_current_memory_text(),
-                label="Box Info",
-            )
         
-        with gr.Row():
-        
-            btn_refresh = gr.Button(value="Refresh the page")
-            btn_refresh.click(None, _js="window.location.reload()")
-       
         with gr.Row():
             available_characters = utils.get_available_characters()
             character_list = gr.Dropdown(
-            available_characters, label="Characters", info="List of Available Characters.")
+            available_characters, label="Characters available to delete", info="List of Available Characters. Used for delete button.")
             character_list.change(lambda x: params.update({"current_selected_character": x}), character_list, None)
         
-            destroy = gr.Button("Destroy all memories/goals/emotion data", variant="stop")
+            destroy = gr.Button("Destroy all memories/goals/emotion data for selected character", variant="stop")
             destroy_confirm = gr.Button(
                 "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
             )
@@ -567,7 +548,7 @@ def ui():
             None,
             destroy_elems,
         )
-        destroy_confirm.click(lambda x: delete_everything(params['current_selected_character']), inputs=destroy_confirm, outputs=None)
+        destroy_confirm.click(lambda x: delete_everything(), inputs=destroy_confirm, outputs=None)
         destroy_cancel.click(
             lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)],
             None,
