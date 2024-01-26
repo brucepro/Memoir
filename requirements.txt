@@ -1,0 +1,15 @@
+beautifulsoup4==4.11.1
+extensions==0.4
+gradio==4.14.0
+modules==1.0.0
+numpy==1.26.3
+python_on_whales==0.68.0
+qdrant_client==1.7.0
+Requests==2.31.0
+scikit_learn==1.2.2
+sentence_transformers==2.2.2
+textblob==0.17.1
+torch==2.0.1
+transformers==4.20.0
+validators==0.22.0
+zarr==2.14.2
