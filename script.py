@@ -213,7 +213,7 @@ def input_modifier(string, state, is_chat=False):
                 string = string + str(long_term_memories)    
         if len(commands_output) > 5:
             print("Adding Commands")
-            string(str(commands_output))
+            print(str(commands_output))
             string = string + str(commands_output)    
     print(string)
     return string
