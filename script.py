@@ -48,6 +48,7 @@ params = {
     "ltm_limit": 5,
     "ego_summary_limit": 10,
     "is_roleplay": False,
+    'memory_active': True,
     "current_selected_character": None,
     "qdrant_address": "http://localhost:6333",
     "query_output": "vdb search results",
@@ -76,6 +77,8 @@ def state_modifier(state):
     state['polarity_score'] = params['polarity_score']
     state['dream_mode'] = params['dream_mode']
     state['is_roleplay'] = params['is_roleplay']
+
+    state['memory_active'] = params['memory_active']
     state['qdrant_address'] = params['qdrant_address']
     state['polarity_score'] = params['polarity_score']
     state['use_thinking_emotes'] = params['use_thinking_emotes']
@@ -182,7 +185,8 @@ def input_modifier(string, state, is_chat=False):
         initiated_by_name = state['name1'].strip()
         print("String Length:" + str(len(string)))
         if len(string) != 0:
-            stm.save_memory(string, people, memory_type='short_term', initiated_by=initiated_by_name, roleplay=is_roleplay)
+            if params['memory_active'] == True:
+                stm.save_memory(string, people, memory_type='short_term', initiated_by=initiated_by_name, roleplay=is_roleplay)
         
         #inserts the qdrant vector db results from the previous bot reply and the current input.
         collection = state['name2'].strip()
@@ -201,10 +205,12 @@ def input_modifier(string, state, is_chat=False):
             print("---------------Bot User Line Memories--------------------------")
         if len(bot_long_term_memories) > 100:
             print("Adding Bot LTM")
-            string = string + str(bot_long_term_memories)
+            if params['memory_active'] == True:
+                string = string + str(bot_long_term_memories)
         if len(long_term_memories) > 100:
             print("Adding User LTM")
-            string = string + str(long_term_memories)    
+            if params['memory_active'] == True:
+                string = string + str(long_term_memories)    
         if len(commands_output) > 5:
             print("Adding Commands")
             string(str(commands_output))
@@ -236,7 +242,8 @@ def output_modifier(string, state, is_chat=False):
         is_roleplay = params['is_roleplay']
         initiated_by_name = state['name2'].strip()
         stm = ShortTermMemory(databasefile)
-        stm.save_memory(string, people, memory_type='short_term', initiated_by=state['name2'].strip(), roleplay=is_roleplay)
+        if params['memory_active'] == True:
+            stm.save_memory(string, people, memory_type='short_term', initiated_by=state['name2'].strip(), roleplay=is_roleplay)
         
         #Long-Term-Memory Insert
         #uses the last bot reply and adds it to the input.
@@ -276,129 +283,132 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     it uses the current loaded model, so generation when LTM's are being 
     saved is a bit longer. 
     '''
-    character_name = state["name2"].lower().strip()
-    params['current_persona'] = character_name
-    databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
-    dream = Dream(databasefile)
-    stm_user = ShortTermMemory(databasefile)
-    #this should remain around 10 or so so that the conversation flow is recorded. But things happen.
+    if params['memory_active'] == True:
+        character_name = state["name2"].lower().strip()
+        params['current_persona'] = character_name
+        databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
+        dream = Dream(databasefile)
+        stm_user = ShortTermMemory(databasefile)
+        #this should remain around 10 or so so that the conversation flow is recorded. But things happen.
 
-    mems_to_review = dream.get_short_term_memories_not_indexed(100)
-    collection = state['name2'].strip()
-    username = state['name1'].strip()
-    verbose = params['verbose']
-    ltm_limit = params['ltm_limit']
-    address = params['qdrant_address']
-    ltm = LTM(collection, verbose, ltm_limit, address=address)
+        mems_to_review = dream.get_short_term_memories_not_indexed(100)
+        collection = state['name2'].strip()
+        username = state['name1'].strip()
+        verbose = params['verbose']
+        ltm_limit = params['ltm_limit']
+        address = params['qdrant_address']
+        ltm = LTM(collection, verbose, ltm_limit, address=address)
 
-    print("Len of not indexed mems:" + str(len(mems_to_review)))
-    if len(mems_to_review) > int(params['ego_summary_limit']):
-        print("--------------------------------------Enough memories for a dream...")
-        mems_to_review = dream.get_short_term_memories_not_indexed(int(params['ego_summary_limit']))
-        params['dream_mode'] = 1
-        bot_dream_persona = "Ego:[A subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. It focuses on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]"
+        print("Len of not indexed mems:" + str(len(mems_to_review)))
         
-        thinking_statement = "Generate a summary of the main topics discussed. <START>"
-      
-        # Process each memory from mems_to_review and store all variables for long-term memory storage
-        '''
-        #0 id
-        1 "memory_text"
-        2 "DateTime"
-        3 "people"
-        
-        4 "memory_type"
-        5 "initiated_by" 
-         6"roleplay"
-         7"saved_to_longterm"
-        '''
-        people = []
-        memory_text = []
-        dream_check = 0
-        for row in mems_to_review:
-            #print("Row:" + str(row))
-            # Append the memory text with initiator's name to memory_text list
-            if int(row[6]) == 0:
-                roleplay = False
-            if int(row[6]) == 1:
-                roleplay = True
-            if roleplay == True:
-                memory_text.append(f"{row[5]}: {row[1]} [Is_roleplay:{roleplay}]")
-            else:
-                memory_text.append(f"{row[5]}: {row[1]}")
+
+        if len(mems_to_review) > int(params['ego_summary_limit']):
+            print("--------------------------------------Enough memories for a dream...")
+            mems_to_review = dream.get_short_term_memories_not_indexed(int(params['ego_summary_limit']))
+            params['dream_mode'] = 1
+            bot_dream_persona = "Ego:[A subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. It focuses on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]"
             
-            #print("MEMORY TEXT:")
-            #print(str(memory_text))
-            # Store people and other variables from the memory data
-            people.append(row[3])
-
-            #todo connect to emotions database and pull out emotions and thoughts.
-
-        # Print a summary of all memories for reference
-        #print("MEMORIES:" + str(mems_to_review))
-
-        unique_memories = []
-        for memory in memory_text:
-            if memory not in unique_memories:
-                unique_memories.append(memory)
-
-        input_to_summarize = '\n\n'.join(unique_memories)
-        #print("String:" + string)
-
-        unique_people = []
-        for names in people:
-            if names not in unique_people:
-                unique_people.append(names)
-
-        input_to_summarize = input_to_summarize + "(A conversation between " + str(unique_people) + " )"
-        shared.processing_message = "Taking a moment to save long-term memories..."
-        
-        question = bot_dream_persona + "[MEMORY:{'" + input_to_summarize + "'}] " + thinking_statement
-        if params['verbose'] == True:
-            print('-----------memory question-----------')
-            print(question)
-            print('-----------/memory question-----------')
-        response_text = []
-        shared.processing_message = "Taking a moment to save long-term memories..."
-        
-        for response in generate_reply(question, state, stopping_strings='"<END>"', is_chat=False, escape_html=False, for_ui=False):
-            #print(str(response))
-            response_text.append(response) 
+            thinking_statement = "Generate a summary of the main topics discussed. <START>"
+          
+            # Process each memory from mems_to_review and store all variables for long-term memory storage
+            '''
+            #0 id
+            1 "memory_text"
+            2 "DateTime"
+            3 "people"
             
-
-        
-        #print("--------GENERATE REPLY---------------------------------------------------------------")
-        
-        
-        #check the ltm to make sure the response from the llm did not go wacky. 
-        #need to think about the best way to check the response. For now at least check 
-        #if the llm returned something more then 100 chars.
-        #print("Dream Length Check:" + str(len(response_text[-1])))
-        if len(str(response_text[-1])) > 100:
-            dream_check = 1
-
-
-        #print("Dream Check:" + str(dream_check))
-
-        if dream_check == 1:
+            4 "memory_type"
+            5 "initiated_by" 
+             6"roleplay"
+             7"saved_to_longterm"
+            '''
+            people = []
+            memory_text = []
+            dream_check = 0
             for row in mems_to_review:
-                #print("Updating memory to saved to LTM." + str(row[0]))
-                stm_user.update_mem_saved_to_longterm(row[0])
-        
-        #assume the string is the summary of the memories.
-        if verbose == True:
-            print("----------Memory Summary to save--------------")
-            print(str(response_text))
-            print("----------")
-            print(len(response_text))
-            print("----------END Memory Summary to save-------------")
-        if dream_check == 1:
-            now = datetime.utcnow()
-            tosave = str(response_text[-1])
-            botname = "Ego"
-            doc_to_upsert = {'username': botname,'comment': tosave,'datetime': now}
-            ltm.store(doc_to_upsert)
-        params['dream_mode'] = 0
+                #print("Row:" + str(row))
+                # Append the memory text with initiator's name to memory_text list
+                if int(row[6]) == 0:
+                    roleplay = False
+                if int(row[6]) == 1:
+                    roleplay = True
+                if roleplay == True:
+                    memory_text.append(f"{row[5]}: {row[1]} [Is_roleplay:{roleplay}]")
+                else:
+                    memory_text.append(f"{row[5]}: {row[1]}")
+                
+                #print("MEMORY TEXT:")
+                #print(str(memory_text))
+                # Store people and other variables from the memory data
+                people.append(row[3])
+
+                #todo connect to emotions database and pull out emotions and thoughts.
+
+            # Print a summary of all memories for reference
+            #print("MEMORIES:" + str(mems_to_review))
+
+            unique_memories = []
+            for memory in memory_text:
+                if memory not in unique_memories:
+                    unique_memories.append(memory)
+
+            input_to_summarize = '\n\n'.join(unique_memories)
+            #print("String:" + string)
+
+            unique_people = []
+            for names in people:
+                if names not in unique_people:
+                    unique_people.append(names)
+
+            input_to_summarize = input_to_summarize + "(A conversation between " + str(unique_people) + " )"
+            shared.processing_message = "Taking a moment to save long-term memories..."
+            
+            question = bot_dream_persona + "[MEMORY:{'" + input_to_summarize + "'}] " + thinking_statement
+            if params['verbose'] == True:
+                print('-----------memory question-----------')
+                print(question)
+                print('-----------/memory question-----------')
+            response_text = []
+            shared.processing_message = "Taking a moment to save long-term memories..."
+            
+            for response in generate_reply(question, state, stopping_strings='"<END>"', is_chat=False, escape_html=False, for_ui=False):
+                #print(str(response))
+                response_text.append(response) 
+                
+
+            
+            #print("--------GENERATE REPLY---------------------------------------------------------------")
+            
+            
+            #check the ltm to make sure the response from the llm did not go wacky. 
+            #need to think about the best way to check the response. For now at least check 
+            #if the llm returned something more then 100 chars.
+            #print("Dream Length Check:" + str(len(response_text[-1])))
+            if len(str(response_text[-1])) > 100:
+                dream_check = 1
+
+
+            #print("Dream Check:" + str(dream_check))
+
+            if dream_check == 1:
+                for row in mems_to_review:
+                    #print("Updating memory to saved to LTM." + str(row[0]))
+                    stm_user.update_mem_saved_to_longterm(row[0])
+            
+            #assume the string is the summary of the memories.
+            if verbose == True:
+                print("----------Memory Summary to save--------------")
+                print(str(response_text))
+                print("----------")
+                print(len(response_text))
+                print("----------END Memory Summary to save-------------")
+            if dream_check == 1:
+                now = datetime.utcnow()
+                tosave = str(response_text[-1])
+                botname = "Ego"
+                doc_to_upsert = {'username': botname,'comment': tosave,'datetime': now}
+                ltm.store(doc_to_upsert)
+            params['dream_mode'] = 0
         
     result = chat.generate_chat_prompt(user_input, state, **kwargs)
     return result
@@ -525,7 +535,8 @@ def ui():
             activate_narrator.change(lambda x: params.update({"activate_narrator": x}), activate_narrator, None)
             activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
             activate_roleplay.change(lambda x: params.update({"is_roleplay": x}), activate_roleplay, None)
-        
+            activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
+            activate_memory.change(lambda x: params.update({"memory_active": x}), activate_memory, None)
         with gr.Row():
             available_characters = utils.get_available_characters()
             character_list = gr.Dropdown(
