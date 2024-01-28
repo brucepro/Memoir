@@ -26,13 +26,13 @@ import itertools
 from python_on_whales import DockerClient
 
 
-from extensions.webui_memoir.goals.goal import Goal
-from extensions.webui_memoir.commandhandler import CommandHandler
-from extensions.webui_memoir.chathelper import ChatHelper
-from extensions.webui_memoir.memory.short_term_memory import ShortTermMemory
-from extensions.webui_memoir.memory.long_term_memory import LTM
-from extensions.webui_memoir.memory.dream import Dream
-from extensions.webui_memoir.persona.persona import Persona
+from extensions.Memoir.goals.goal import Goal
+from extensions.Memoir.commandhandler import CommandHandler
+from extensions.Memoir.chathelper import ChatHelper
+from extensions.Memoir.memory.short_term_memory import ShortTermMemory
+from extensions.Memoir.memory.long_term_memory import LTM
+from extensions.Memoir.memory.dream import Dream
+from extensions.Memoir.persona.persona import Persona
 
 #globals
 current_dir = os.path.dirname(os.path.abspath(__file__))
