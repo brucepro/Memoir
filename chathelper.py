@@ -3,9 +3,9 @@ ChatHelper.py
 
 
 '''
-from extensions.webui_memoir.goals.goal import Goal
-from extensions.webui_memoir.persona.persona import Persona
-from extensions.webui_memoir.commands.urlhandler import UrlHandler
+from extensions.memoir.goals.goal import Goal
+from extensions.memoir.persona.persona import Persona
+from extensions.memoir.commands.urlhandler import UrlHandler
 import re
 from sqlite3 import connect
 import pathlib
@@ -38,10 +38,7 @@ class ChatHelper():
     def check_if_narration(string):
         #pattern check if it is narration. 
         #set input name for narrator.
-        pattern = r"\*[^.*]*\*\n?$"
-        match = re.search(pattern, input_string)
-        if match:
-            print("Only Emote Found")
+        if input_string[0] == "*" and input_string[-1] == "*":
+            return True
         else:
-            return None 
-        pass
+            return False

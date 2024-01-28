@@ -2,9 +2,9 @@
 CommandHandler.py
 
 '''
-from extensions.webui_memoir.goals.goal import Goal
-from extensions.webui_memoir.persona.persona import Persona
-from extensions.webui_memoir.commands.urlhandler import UrlHandler
+from extensions.memoir.goals.goal import Goal
+from extensions.memoir.persona.persona import Persona
+from extensions.memoir.commands.urlhandler import UrlHandler
 import re
 from sqlite3 import connect
 import pathlib

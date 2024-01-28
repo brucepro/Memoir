@@ -103,7 +103,8 @@ def bot_prefix_modifier(string, state):
     Modifies the prefix for the next bot reply in chat mode.
     By default, the prefix will be something like "Bot Name:".
     """
-    print("polarity_score:" + str(params['polarity_score']) + "use_thinking_emotes:" + str(params['use_thinking_emotes']))
+    if params['verbose'] == True:
+        print("polarity_score:" + str(params['polarity_score']) + "use_thinking_emotes:" + str(params['use_thinking_emotes']))
     if params['use_thinking_emotes'] == True:
         if params['polarity_score'] < -0.699999999999999:
             shared.processing_message = random.choice(list(params['thinking_emotes_negative_polarity']))
@@ -215,7 +216,7 @@ def input_modifier(string, state, is_chat=False):
             print("Adding Commands")
             print(str(commands_output))
             string = string + str(commands_output)    
-    print(string)
+    
     return string
 
 
@@ -361,7 +362,8 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                     unique_people.append(names)
 
             input_to_summarize = input_to_summarize + "(A conversation between " + str(unique_people) + " )"
-            shared.processing_message = "Taking a moment to save long-term memories..."
+            if params['use_thinking_emotes'] == True:
+                shared.processing_message = "Taking a moment to save long-term memories..."
             
             question = bot_dream_persona + "[MEMORY:{'" + input_to_summarize + "'}] " + thinking_statement
             if params['verbose'] == True:
@@ -369,7 +371,6 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 print(question)
                 print('-----------/memory question-----------')
             response_text = []
-            shared.processing_message = "Taking a moment to save long-term memories..."
             
             for response in generate_reply(question, state, stopping_strings='"<END>"', is_chat=False, escape_html=False, for_ui=False):
                 #print(str(response))
@@ -532,11 +533,14 @@ def ui():
             cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
         with gr.Row():
             activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles* (Not Implemented yet.)')
-            activate_narrator.change(lambda x: params.update({"activate_narrator": x}), activate_narrator, None)
+            activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
             activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
-            activate_roleplay.change(lambda x: params.update({"is_roleplay": x}), activate_roleplay, None)
+            activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
             activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
-            activate_memory.change(lambda x: params.update({"memory_active": x}), activate_memory, None)
+            activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
+        with gr.Row():
+            use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
+            use_thinking_emotes_ckbox.change(lambda x: params.update({'use_thinking_emotes': x}), use_thinking_emotes_ckbox, None)
         with gr.Row():
             available_characters = utils.get_available_characters()
             character_list = gr.Dropdown(
