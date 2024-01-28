@@ -184,7 +184,11 @@ def input_modifier(string, state, is_chat=False):
         people = state['name1'].strip() + " and " + state["name2"].strip()
         is_roleplay = params['is_roleplay']
         initiated_by_name = state['name1'].strip()
-        print("String Length:" + str(len(string)))
+        
+        if params['activate_narrator'] == True:
+            if ChatHelper.check_if_narration(string) == True:
+                initiated_by_name = "Narrator"
+                
         if len(string) != 0:
             if params['memory_active'] == True:
                 stm.save_memory(string, people, memory_type='short_term', initiated_by=initiated_by_name, roleplay=is_roleplay)
@@ -242,6 +246,10 @@ def output_modifier(string, state, is_chat=False):
         people = state['name1'].strip() + " and " + state["name2"].strip()
         is_roleplay = params['is_roleplay']
         initiated_by_name = state['name2'].strip()
+        if params['activate_narrator'] == True:
+            if ChatHelper.check_if_narration(string) == True:
+                initiated_by_name = "Narrator"
+         
         stm = ShortTermMemory(databasefile)
         if params['memory_active'] == True:
             stm.save_memory(string, people, memory_type='short_term', initiated_by=state['name2'].strip(), roleplay=is_roleplay)
@@ -532,7 +540,7 @@ def ui():
             cstartdreammode = gr.Button("List Params in debug window")
             cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
         with gr.Row():
-            activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles* (Not Implemented yet.)')
+            activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
             activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
             activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
             activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)

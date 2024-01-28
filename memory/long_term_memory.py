@@ -109,7 +109,7 @@ class LTM():
             comment = result.payload['comment']
             if comment not in seen_comments:
                 seen_comments.add(comment)
-                formated_results.append("You remember:" + result.payload['comment'] + ": on " + result.payload['datetime'] + ": Current date/time is:" + str(datetime.utcnow()))
+                formated_results.append("You remember:" + result.payload['comment'] + ": on " + result.payload['datetime'])
             else:
                 if self.verbose:
                     print("Not adding " + comment)

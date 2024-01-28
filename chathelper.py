@@ -35,7 +35,7 @@ class ChatHelper():
         return new_str
 
 
-    def check_if_narration(string):
+    def check_if_narration(input_string):
         #pattern check if it is narration. 
         #set input name for narrator.
         if input_string[0] == "*" and input_string[-1] == "*":
