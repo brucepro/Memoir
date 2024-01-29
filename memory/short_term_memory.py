@@ -78,9 +78,9 @@ class ShortTermMemory:
     def save_memory(self, memory_text, people, memory_type, initiated_by, roleplay, saved_to_longterm=0):
         try:
             self.connect()
-            sql = f"INSERT INTO short_term_memory (memory_text, people, memory_type, initiated_by, roleplay, saved_to_longterm) VALUES ('{memory_text}', '{people}', '{memory_type}', '{initiated_by}', {roleplay}, 0)"
-            #print(sql)
-            self.cursor.execute(sql)
+            sql = "INSERT INTO short_term_memory (memory_text, people, memory_type, initiated_by, roleplay, saved_to_longterm) VALUES (?, ?, ?, ?, ?, 0)"
+            values = (memory_text, people, memory_type, initiated_by, roleplay)
+            self.cursor.execute(sql, values)
             self.conn.commit()
             #print('Memory saved successfully!')
         except Exception as e:
