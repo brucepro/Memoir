@@ -39,8 +39,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 memoir_js = os.path.join(current_dir, "memoir.js")
 memoir_css = os.path.join(current_dir, "memoir.css")
 databasepath = os.path.join(current_dir, "storage/sqlite/") 
-bot_long_term_memories = ""  #saved after output generation and added to the next input.
-
 
 params = {
     "display_name": "Memoir+",
@@ -52,10 +50,11 @@ params = {
     "current_selected_character": None,
     "qdrant_address": "http://localhost:6333",
     "query_output": "vdb search results",
-    'verbose': False,
+    'verbose': True,
     'polarity_score': 0,
     'dream_mode': 0,
     'activate_narrator': False,
+    'bot_long_term_memories': "",
     'use_thinking_emotes': True,
     'thinking_emotes': ['Deep in thought...','Pondering deeply...', 'Gathering my thoughts...','Organizing my ideas...', 'Taking it all in...','Absorbing the information provided...', 'Mulling it over...','Reflecting on your request...', 'Delving into the matter...','Diving deep into thought...', 'Thinking hard...','Concentrating intensely...', 'Considering all angles...','Examining every possibility...', 'Evaluating options...','Weighing up your request...', 'Deliberating carefully...','Carefully assessing the situation...', 'Musing over possibilities...','Dreamily pondering various outcomes...', 'Engrossed in thought...','Completely absorbed in my thoughts...', 'Analyzing information...','Dissecting your request into its constituent parts...', 'Formulating a response...','Creating the perfect reply for you...', 'Taking it all into account...','Incorporating every detail of your input...', 'Weighing up factors...','Considering the impact of each aspect of your request...', 'Meditating on a solution...','Seeking a response that will satisfy both you and my principles...', 'Reflecting intently...','Thoughtfully assessing every angle of your prompt...', 'Assessing the situation...','Carefully evaluating your needs...', 'Sifting through ideas...','Examining different approaches to address your query...', 'Piecing together a response...','Composing an answer that will meet your expectations...', 'Delving into the matter...','Diving deep into thought...', 'Taking it all in...','Absorbing the information provided...'],
     'thinking_emotes_negative_polarity': ['Deeply troubled...', 'Tormented by thought...', 'Plagued by doubts...'],
@@ -91,10 +90,6 @@ def state_modifier(state):
     '''
     state['custom_stopping_strings'] = '"[DTime=","[24hour Average Polarity Score=", "' + str(state["name1"].strip()) +':"'
 
-    if params['verbose'] == True:
-        print("----------------State Modifer-------------")
-        #print(state)
-        print("----------------End State Modifer-------------")
     return state
 
 
@@ -103,8 +98,7 @@ def bot_prefix_modifier(string, state):
     Modifies the prefix for the next bot reply in chat mode.
     By default, the prefix will be something like "Bot Name:".
     """
-    if params['verbose'] == True:
-        print("polarity_score:" + str(params['polarity_score']) + "use_thinking_emotes:" + str(params['use_thinking_emotes']))
+    
     if params['use_thinking_emotes'] == True:
         if params['polarity_score'] < -0.699999999999999:
             shared.processing_message = random.choice(list(params['thinking_emotes_negative_polarity']))
@@ -117,7 +111,6 @@ def bot_prefix_modifier(string, state):
         elif params['polarity_score'] >= 0.75 and params['polarity_score'] <= 1:
             shared.processing_message = random.choice(list(params['thinking_emotes_positive_polarity']))
         if params['dream_mode'] == 1:
-            print("Setting dream mode processing message.")
             shared.processing_message = "Taking a moment to save Long Term Memories..."
     
 
@@ -129,8 +122,6 @@ def bot_prefix_modifier(string, state):
     past_time = current_time - timedelta(hours=n)
     past_time_str = past_time.strftime('%Y-%m-%d %H:%M:%S.%f')
     emotions_data = persona.get_emotions_timeframe(past_time_str)
-    if params['verbose'] == True:
-        print("---Emotions Data from DB:" + str(emotions_data))
     polarity_total = 0
     polarity_len = len(emotions_data)
     for data in emotions_data:
@@ -142,10 +133,6 @@ def bot_prefix_modifier(string, state):
         string = "[DTime=" + str(current_time) + "][24hour Average Polarity Score=" + str(average_polarity) + "]" + string
     else:
         string = "[DTime=" + str(current_time) + "]" + string
-    
-    if params['verbose'] == True:
-        print("Bot_prefix_modifer" + str(string))
-    
 
     return string
 
@@ -159,17 +146,11 @@ def input_modifier(string, state, is_chat=False):
     to "text", here called "string", and not to "visible_text".
     """
     #vars
+    #we need to pass state to some of our buttons. Need to think of a better way.
     character_name = str(state["name2"].lower().strip())
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     stm = ShortTermMemory(databasefile)
     
-    if params['verbose'] == True:
-        print("---------SHARED VAR----------------")
-        #print(shared.settings)
-        print("/////////--------SHARED VAR----------------")
-        print("bot_current_polarity defined in state['polarity_score']:" + str(params['polarity_score']))
-        print(params['thinking_emotes_neutral_polarity'])
-
     commands_output = None    
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
@@ -201,26 +182,26 @@ def input_modifier(string, state, is_chat=False):
         address = params['qdrant_address']
         ltm = LTM(collection, verbose, ltm_limit, address=address)
         long_term_memories = ltm.recall(string)
-        if params['verbose'] == False:
-            print("--------------User Line Memories---------------------------")
-            print(long_term_memories)
-            print("---------------End User Line Memories--------------------------")
-            print("--------------Bot Line Memories---------------------------")
-            print(bot_long_term_memories)
-            print("---------------Bot User Line Memories--------------------------")
-        if len(bot_long_term_memories) > 100:
-            print("Adding Bot LTM")
-            if params['memory_active'] == True:
-                string = string + str(bot_long_term_memories)
-        if len(long_term_memories) > 100:
+        memory_text = list(params['bot_long_term_memories']) + list(long_term_memories)
+        unique_memories = []
+        for memory in memory_text:
+            if memory not in unique_memories:
+                unique_memories.append(memory)
+        if params['verbose'] == True:
+            print("--------------Memories---------------------------")
+            print(unique_memories)
+            print("---------------End Memories--------------------------")
+            
+        print("Len mem:" + str(len(unique_memories)))
+        if len(unique_memories) > 0:
             print("Adding User LTM")
             if params['memory_active'] == True:
-                string = string + str(long_term_memories)    
-        if len(commands_output) > 5:
+                string = string + str(unique_memories)    
+        if len(commands_output) > 0:
             print("Adding Commands")
             print(str(commands_output))
             string = string + str(commands_output)    
-    
+    print("STRING:" + str(string))
     return string
 
 
@@ -232,9 +213,13 @@ def output_modifier(string, state, is_chat=False):
     and the original version goes into history['internal'].
     """
     
+    
     character_name = state["name2"].lower().strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
-    
+    #sometimes history goes poof..need to find out why.
+    print("-----------------HISTORY------------------------")
+    print(state['history'])
+    print("-----------------HISTORY------------------------")
     commands_output = None    
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
@@ -248,6 +233,7 @@ def output_modifier(string, state, is_chat=False):
         initiated_by_name = state['name2'].strip()
         if params['activate_narrator'] == True:
             if ChatHelper.check_if_narration(string) == True:
+                print("STM is a narration")
                 initiated_by_name = "Narrator"
          
         stm = ShortTermMemory(databasefile)
@@ -262,21 +248,13 @@ def output_modifier(string, state, is_chat=False):
         ltm_limit = params['ltm_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, verbose, ltm_limit, address=address)
-        bot_long_term_memories = ltm.recall(string)
-        if verbose == True:
-            print("--------------Bot Line Memories---------------------------")
-            print(bot_long_term_memories)
-            print("---------------Bot User Line Memories--------------------------")    
+        params['bot_long_term_memories'] = ltm.recall(string)
         
     if params['dream_mode'] == 0:
         #add the output of commands
         if len(commands_output) > 0:
             string = string + str(commands_output)    
     
-    if params['verbose'] == True:
-        print("----------STATE--------------")
-        print(state)
-        print("----------END STATE-------------")
 
     return string
 
@@ -297,6 +275,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         params['current_persona'] = character_name
         databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
         dream = Dream(databasefile)
+        persona = Persona(databasefile)
         stm_user = ShortTermMemory(databasefile)
         #this should remain around 10 or so so that the conversation flow is recorded. But things happen.
 
@@ -307,17 +286,17 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         ltm_limit = params['ltm_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, verbose, ltm_limit, address=address)
-
+        dream_check = 0
         print("Len of not indexed mems:" + str(len(mems_to_review)))
         
 
         if len(mems_to_review) > int(params['ego_summary_limit']):
             print("--------------------------------------Enough memories for a dream...")
-            mems_to_review = dream.get_short_term_memories_not_indexed(int(params['ego_summary_limit']))
-            params['dream_mode'] = 1
-            bot_dream_persona = "Ego:[A subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. It focuses on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]"
             
-            thinking_statement = "Generate a summary of the main topics discussed. <START>"
+            params['dream_mode'] = 1
+            bot_dream_persona = "You are Ego:[The subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. You focus on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]"
+            
+            thinking_statement = "Here is a summary of the main topics discussed in these memories  "
           
             # Process each memory from mems_to_review and store all variables for long-term memory storage
             '''
@@ -333,7 +312,9 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             '''
             people = []
             memory_text = []
+            emotions = []
             dream_check = 0
+            roleplay_message = ""
             for row in mems_to_review:
                 #print("Row:" + str(row))
                 # Append the memory text with initiator's name to memory_text list
@@ -342,14 +323,18 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 if int(row[6]) == 1:
                     roleplay = True
                 if roleplay == True:
-                    memory_text.append(f"{row[5]}: {row[1]} [Is_roleplay:{roleplay}]")
+                    roleplay_message = "These memories are part of a roleplay session, note that it was part of a roleplay in the memory summary."
+                print("Innitiated by:" + row[5])
+                if str(row[5]) == "Narrator":
+                    memory_text.append(f"{row[1]}")
                 else:
                     memory_text.append(f"{row[5]}: {row[1]}")
-                
+        
                 #print("MEMORY TEXT:")
                 #print(str(memory_text))
                 # Store people and other variables from the memory data
                 people.append(row[3])
+                emotions.append(persona.get_emotions_from_string(row[1]))
 
                 #todo connect to emotions database and pull out emotions and thoughts.
 
@@ -368,20 +353,24 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             for names in people:
                 if names not in unique_people:
                     unique_people.append(names)
+            unique_emotions = []
+            for emotion in emotions:
+                if emotion not in unique_emotions:
+                    unique_emotions.append(emotion)
 
             input_to_summarize = input_to_summarize + "(A conversation between " + str(unique_people) + " )"
             if params['use_thinking_emotes'] == True:
                 shared.processing_message = "Taking a moment to save long-term memories..."
             
-            question = bot_dream_persona + "[MEMORY:{'" + input_to_summarize + "'}] " + thinking_statement
+            question = bot_dream_persona + "[MEMORIES:{'" + input_to_summarize + "'}] " + roleplay_message + thinking_statement
+            
             if params['verbose'] == True:
                 print('-----------memory question-----------')
                 print(question)
                 print('-----------/memory question-----------')
             response_text = []
             
-            for response in generate_reply(question, state, stopping_strings='"<END>"', is_chat=False, escape_html=False, for_ui=False):
-                #print(str(response))
+            for response in generate_reply(question, state, stopping_strings='"<END>","</END>"', is_chat=False, escape_html=False, for_ui=False):
                 response_text.append(response) 
                 
 
@@ -393,11 +382,13 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             #need to think about the best way to check the response. For now at least check 
             #if the llm returned something more then 100 chars.
             #print("Dream Length Check:" + str(len(response_text[-1])))
+            #Need to do some string replaces on the generated txt the persona likes to add \n, </START>, </END>, Summary:, consider something better then You remember:
             if len(str(response_text[-1])) > 100:
                 dream_check = 1
+                print("Summary passed checking")
 
 
-            #print("Dream Check:" + str(dream_check))
+            print("Dream Check:" + str(dream_check))
 
             if dream_check == 1:
                 for row in mems_to_review:
@@ -407,16 +398,19 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             #assume the string is the summary of the memories.
             if verbose == True:
                 print("----------Memory Summary to save--------------")
-                print(str(response_text))
+                print(str(response_text[-1]))
                 print("----------")
-                print(len(response_text))
+                print(len(response_text[-1]))
                 print("----------END Memory Summary to save-------------")
             if dream_check == 1:
                 now = datetime.utcnow()
-                tosave = str(response_text[-1])
-                botname = "Ego"
-                doc_to_upsert = {'username': botname,'comment': tosave,'datetime': now}
+                tosave = str(response_text[-1]) + "(A conversation between " + str(unique_people) + " )"
+                botname = state['name2'].strip()
+                doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'emotions': str(unique_emotions), 'people': str(unique_people)}
+                print("Saving to Qdrant" + str(doc_to_upsert))
                 ltm.store(doc_to_upsert)
+                
+
             params['dream_mode'] = 0
         
     result = chat.generate_chat_prompt(user_input, state, **kwargs)
@@ -479,6 +473,11 @@ def update_dreammode():
     print(str(params))
     pass
 
+def deep_dream():
+    params['deep_dream'] = 1
+    
+    pass
+
 
 def _get_current_memory_text() -> str:
     available_characters = utils.get_available_characters()
@@ -518,50 +517,53 @@ def ui():
         - For feedback or support, please raise an issue on https://github.com/brucepro
         """))
 
+        with gr.Accordion("Memory Settings"):    
+            with gr.Row():
+                ltm_limit = gr.Slider(
+                    1, 100,
+                    step=1,
+                    value=params['ltm_limit'],
+                    label='Long Term Memory Result Count (How many memories to return from LTM into context. Does this number for both bot memories and user memories. So at 5, it recovers 10 memories.)',
+                    )
+                ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
+            with gr.Row():
+                ego_summary_limit = gr.Slider(
+                    1, 100,
+                    step=1,
+                    value=params['ego_summary_limit'],
+                    label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
+                    )
+                ego_summary_limit.change(lambda x: params.update({'ego_summary_limit': x}), ego_summary_limit, None)
+        with gr.Accordion("Debug"):    
+            with gr.Row():
+                cstartdreammode = gr.Button("List Params in debug window")
+                cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
+                cstartdeepdream = gr.Button("Deep Dream 100 memories")
+                cstartdeepdream.click(lambda x: deep_dream(), inputs=cstartdeepdream, outputs=None)
+        with gr.Accordion("Settings"):
+            with gr.Row():
+                activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
+                activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
+                activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
+                activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
+                activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
+                activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
+            with gr.Row():
+                use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
+                use_thinking_emotes_ckbox.change(lambda x: params.update({'use_thinking_emotes': x}), use_thinking_emotes_ckbox, None)
+            with gr.Row():
+                available_characters = utils.get_available_characters()
+                character_list = gr.Dropdown(
+                available_characters, label="Characters available to delete", info="List of Available Characters. Used for delete button.")
+                character_list.change(lambda x: params.update({"current_selected_character": x}), character_list, None)
             
-        with gr.Row():
-            ltm_limit = gr.Slider(
-                1, 100,
-                step=1,
-                value=params['ltm_limit'],
-                label='Long Term Memory Result Count (How many memories to return from LTM into context. Does this number for both bot memories and user memories. So at 5, it recovers 10 memories.)',
+                destroy = gr.Button("Destroy all memories/goals/emotion data for selected character", variant="stop")
+                destroy_confirm = gr.Button(
+                    "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
                 )
-            ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
-        with gr.Row():
-            ego_summary_limit = gr.Slider(
-                1, 100,
-                step=1,
-                value=params['ego_summary_limit'],
-                label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
-                )
-            ego_summary_limit.change(lambda x: params.update({'ego_summary_limit': x}), ego_summary_limit, None)
-        
-        with gr.Row():
-            cstartdreammode = gr.Button("List Params in debug window")
-            cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
-        with gr.Row():
-            activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
-            activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
-            activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
-            activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
-            activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
-            activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
-        with gr.Row():
-            use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
-            use_thinking_emotes_ckbox.change(lambda x: params.update({'use_thinking_emotes': x}), use_thinking_emotes_ckbox, None)
-        with gr.Row():
-            available_characters = utils.get_available_characters()
-            character_list = gr.Dropdown(
-            available_characters, label="Characters available to delete", info="List of Available Characters. Used for delete button.")
-            character_list.change(lambda x: params.update({"current_selected_character": x}), character_list, None)
-        
-            destroy = gr.Button("Destroy all memories/goals/emotion data for selected character", variant="stop")
-            destroy_confirm = gr.Button(
-                "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
-            )
-            destroy_cancel = gr.Button("Do Not Delete", visible=False)
-            destroy_elems = [destroy_confirm, destroy, destroy_cancel]
-            # Clear memory with confirmation
+                destroy_cancel = gr.Button("Do Not Delete", visible=False)
+                destroy_elems = [destroy_confirm, destroy, destroy_cancel]
+                # Clear memory with confirmation
         destroy.click(
             lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)],
             None,

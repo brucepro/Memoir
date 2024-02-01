@@ -78,7 +78,8 @@ class LTM():
             print(operation_info)
 
     def get_embedding_vector(self, doc):
-        self.vector = self.encoder.encode(doc['comment']).tolist()
+        data = doc['comment'] + doc['emotions'] + doc['people']
+        self.vector = self.encoder.encode(data).tolist()
         self.next_id = random.randint(0, 1e10)
         points = [
             PointStruct(id=self.next_id,
@@ -109,7 +110,8 @@ class LTM():
             comment = result.payload['comment']
             if comment not in seen_comments:
                 seen_comments.add(comment)
-                formated_results.append("You remember:" + result.payload['comment'] + ": on " + result.payload['datetime'])
+                #'2019':{'Event': 'Event comment', 'Emotions': {'Relief': 7, 'Excitement': 6}, 'People': ['Friends', 'Parents']}]
+                formated_results.append(result.payload['datetime'] + ":{'Event':" + result.payload['comment'] + ", 'Emotions:{" + result.payload['emotions'] + "}, 'People':[" + result.payload['people'] + "]}")
             else:
                 if self.verbose:
                     print("Not adding " + comment)

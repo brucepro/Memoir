@@ -4,6 +4,7 @@ Persona
 from textblob import TextBlob
 import sqlite3
 import os
+import re
 
 class Persona:
     def __init__(self, db_name):
@@ -129,3 +130,55 @@ class Persona:
 	        cursor.execute(sql, values)
 	        conn.commit()
 	        conn.close()
+
+    def get_emotions_from_string(self,input_string):
+        pattern = r'\[([^\[\]]+)\]'
+        emotion_output = []
+        commands_in_string = re.findall(pattern, input_string, re.IGNORECASE)
+        commands_list = []
+        for cmd in commands_in_string:
+            if ":" in cmd:
+                print("Processing : command..." + str(cmd))
+                command_parts1 = cmd.split(',')
+                for item in command_parts1:
+                    command_parts2 = item.split(':')
+                    if len(command_parts2) > 1:
+                        commands_list.append({command_parts2[0].strip(): {f"arg{i+1}": arg.strip() for i, arg in enumerate(command_parts2[1].split(','))}})
+        for cmd in commands_list:
+            if isinstance(cmd, dict) and "EMOTION" in cmd:
+                args = cmd["EMOTION"]
+                arg1 = str(args.get("arg1"))
+                emotion_output.append({"EMOTION": {"arg1": arg1}})
+            if isinstance(cmd, dict) and "FEELINGS" in cmd:
+                args = cmd["FEELINGS"]
+                arg1 = str(args.get("arg1"))
+                emotion_output.append({"FEELINGS": {"arg1": arg1}})
+            if isinstance(cmd, dict) and "MOOD" in cmd:
+                args = cmd["MOOD"]
+                arg1 = str(args.get("arg1"))
+                emotion_output.append({"MOOD": {"arg1": arg1}}) 
+        emotions, feelings, mood = [], [], []
+        for key in emotion_output:
+            if isinstance(key, dict) and "EMOTION" in key:
+                args = key["EMOTION"]
+                arg1 = str(args.get("arg1"))
+                if arg1 != []:
+                    emotions.append(arg1)
+            
+            if isinstance(key, dict) and "FEELINGS" in key:
+                args = key["FEELINGS"]
+                arg1 = str(args.get("arg1"))
+                if arg1 != []:
+                    feelings.append(arg1)
+            
+            if isinstance(key, dict) and "MOOD" in key:
+                args = key["MOOD"]
+                arg1 = str(args.get("arg1"))
+                if arg1 != []:
+                    mood.append(arg1)
+
+        output = f"EMOTION: {emotions} FEELINGS: {feelings} MOOD: {mood}"
+        return output
+
+
+
