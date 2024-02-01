@@ -134,6 +134,7 @@ class Persona:
     def get_emotions_from_string(self,input_string):
         pattern = r'\[([^\[\]]+)\]'
         emotion_output = []
+        output = ""
         commands_in_string = re.findall(pattern, input_string, re.IGNORECASE)
         commands_list = []
         for cmd in commands_in_string:
@@ -176,8 +177,13 @@ class Persona:
                 arg1 = str(args.get("arg1"))
                 if arg1 != []:
                     mood.append(arg1)
-
-        output = f"EMOTION: {emotions} FEELINGS: {feelings} MOOD: {mood}"
+        if len(emotions) > 0:
+            output = f"EMOTION: {emotions}"
+        if len(feelings) > 0:
+            output = output + f"FEELINGS: {feelings}"
+        if len(mood) > 0:
+            output = output + f"MOOD: {mood}"
+                         
         return output
 
 

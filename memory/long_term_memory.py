@@ -6,7 +6,7 @@ import random
 from datetime import datetime
 from qdrant_client import models, QdrantClient
 from qdrant_client.http.models import PointStruct
-
+from html import escape
 from sentence_transformers import SentenceTransformer
 
 class LTM():
@@ -110,8 +110,10 @@ class LTM():
             comment = result.payload['comment']
             if comment not in seen_comments:
                 seen_comments.add(comment)
-                #'2019':{'Event': 'Event comment', 'Emotions': {'Relief': 7, 'Excitement': 6}, 'People': ['Friends', 'Parents']}]
-                formated_results.append(result.payload['datetime'] + ":{'Event':" + result.payload['comment'] + ", 'Emotions:{" + result.payload['emotions'] + "}, 'People':[" + result.payload['people'] + "]}")
+                #formated_results.append("(" + result.payload['datetime'] + "'Memory':" + result.payload['comment'] + ", 'Emotions:" + result.payload['emotions'] + ", 'People':" + result.payload['people'] + ")")                
+                #formated_results.append("(" + result.payload['datetime'] + "Memory:" + escape(result.payload['comment']) + ",Emotions:" + escape(result.payload['emotions']) + ",People:" + escape(result.payload['people']) + ")")
+                formated_results.append("You remember:" + result.payload['comment'] + ": on " + result.payload['datetime'])
+                
             else:
                 if self.verbose:
                     print("Not adding " + comment)
