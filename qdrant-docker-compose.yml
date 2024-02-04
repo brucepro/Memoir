@@ -6,6 +6,6 @@ services:
     ports:
       - "6333:6333"
     volumes:
-          - ${QDRANT_DIR:-./storage}:/app/qdrant
+          - './storage/ubuntu:/app/qdrant:rw'
 
 
