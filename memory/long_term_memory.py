@@ -12,8 +12,8 @@ from sentence_transformers import SentenceTransformer
 class LTM():
     def __init__(self,
                  collection,
+                 ltm_limit,
                  verbose=False,
-                 ltm_limit=5,
                  embedder='all-mpnet-base-v2',
                  address='localhost',
                  port=6333
@@ -24,6 +24,7 @@ class LTM():
             print("initiating verbose debug mode.............")
         self.collection = collection
         self.ltm_limit = ltm_limit
+        print("LTM LIMIT:" + str(ltm_limit))
         self.address = address
         self.port = port
         if self.verbose:

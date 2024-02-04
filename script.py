@@ -184,7 +184,7 @@ def input_modifier(string, state, is_chat=False):
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
         address = params['qdrant_address']
-        ltm = LTM(collection, verbose, ltm_limit, address=address)
+        ltm = LTM(collection, ltm_limit, verbose, address=address)
         long_term_memories = ltm.recall(string)
         memory_text = list(params['bot_long_term_memories']) + list(long_term_memories)
         unique_memories = []
@@ -251,7 +251,7 @@ def output_modifier(string, state, is_chat=False):
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
         address = params['qdrant_address']
-        ltm = LTM(collection, verbose, ltm_limit, address=address)
+        ltm = LTM(collection, ltm_limit, verbose,  address=address)
         params['bot_long_term_memories'] = ltm.recall(string)
         
     if params['dream_mode'] == 0:
@@ -289,7 +289,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
         address = params['qdrant_address']
-        ltm = LTM(collection, verbose, ltm_limit, address=address)
+        ltm = LTM(collection,ltm_limit,verbose, address=address)
         dream_check = 0
         print("Len of not indexed mems:" + str(len(mems_to_review)))
         
@@ -373,7 +373,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 tosave = str(response_text[-1])
                 botname = state['name2'].strip()
                 doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'emotions': str(unique_emotions), 'people': str(unique_people)}
-                if verbose == True:
+                if verbose == False:
                     print("Saving to Qdrant" + str(doc_to_upsert))
                 ltm.store(doc_to_upsert)
                 
@@ -459,7 +459,7 @@ def delete_everything():
     else:
         character_name = params['current_selected_character']
         databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
-        ltm = LTM(character_name, params['verbose'], params['ltm_limit'], address=params['qdrant_address'])
+        ltm = LTM(character_name, params['ltm_limit'], params['verbose'], address=params['qdrant_address'])
         ltm.delete_vector_db()
         utils.delete_file(databasefile)
         
