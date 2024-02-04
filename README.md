@@ -3,6 +3,8 @@
 
 # How to Support 
 If you find this extension useful I could use a cup of coffee!  I have spent many nights working to get this program to this point. https://www.buymeacoffee.com/brucepro
+
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F7U45XV)
 
 # About the extension 
