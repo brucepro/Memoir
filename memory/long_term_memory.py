@@ -24,7 +24,7 @@ class LTM():
             print("initiating verbose debug mode.............")
         self.collection = collection
         self.ltm_limit = ltm_limit
-        print("LTM LIMIT:" + str(ltm_limit))
+        #print("LTM LIMIT:" + str(ltm_limit))
         self.address = address
         self.port = port
         if self.verbose:

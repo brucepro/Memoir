@@ -20,7 +20,7 @@ class CommandHandler():
         pattern = r'\[([^\[\]]+)\]'
         emotion_output = {}
         commands_in_string = re.findall(pattern, input_string, re.IGNORECASE)
-        print("Processing commands:" + str(commands_in_string))
+        #print("Processing commands:" + str(commands_in_string))
  
         # Create an empty list to store the commands
         commands_list = []
@@ -29,7 +29,7 @@ class CommandHandler():
             if command_processed==False:
                 if "=" in cmd:
                     command_processed=True
-                    print("Processing = command..." + str(cmd))
+                    #print("Processing = command..." + str(cmd))
                     command_parts = cmd.split('=')
                     if len(command_parts) == 1:
                         # If there's no equal sign, the command is just an action without arguments
@@ -43,7 +43,7 @@ class CommandHandler():
                 if ":" in cmd:
                 
                     command_processed=True
-                    print("Processing : command..." + str(cmd))
+                    #print("Processing : command..." + str(cmd))
                     command_parts1 = cmd.split(',')
                     #take each each one and break it down. 
                     for item in command_parts1:
@@ -52,7 +52,7 @@ class CommandHandler():
                         if len(command_parts2) > 1:
                             commands_list.append({command_parts2[0].strip(): {f"arg{i+1}": arg.strip() for i, arg in enumerate(command_parts2[1].split(','))}})
                    
-        print("COMMANDS:" + str(commands_list))
+        #print("COMMANDS:" + str(commands_list))
         emotion_output = []
         if len(commands_list) > 0:
             for cmd in commands_list:
@@ -88,7 +88,7 @@ class CommandHandler():
                     args = cmd["UPDATE_GOAL_STATUS"]
                     goal_id = args.get("arg1")
                     status = args.get("arg2")
-                    print("GOAL ID IS=" + str(goal_id))
+                    #print("GOAL ID IS=" + str(goal_id))
                     if isinstance(goal_id,int):
                         Goal.update_goal(connect(self.db_path),goal_id,status)
                         self.command_output["UPDATE_GOAL_STATUS"] = f"Updated goal ID: {goal_id}, status to: {status}"
@@ -104,6 +104,7 @@ class CommandHandler():
                 
                 if isinstance(cmd, dict) and "GOALS_HELP" in cmd:
                 # Get the value of the key "ADD_GOAL", which should be another dictionary
+                    #there is a bug here I need to fix.
                     args = cmd["GOALS_HELP"]
                     #show goals help. 
                     helptext = '[ADD_GOAL=New Goal,Description for New Goal,Importance Rating] - Adds a new goal with the given title, description, and importance rating (out of 100) to your knowledge base. For example, to create a goal named "Meditation Practice," with a description of "Develop a consistent meditation practice to improve focus and mental clarity" and an importance rating of 50 out of 100, you would enter:[ADD_GOAL=Meditation Practice,Develop a consistent meditation practice to improve focus and mental clarity,50] You can modify these values as needed.[LIST_GOALS] - Retrieves and lists all current goals stored in your knowledge base, showing their IDs, titles, descriptions, importance ratings, statuses, and completion dates (if applicable).[UPDATE_GOAL_STATUS=id,status] - Changes the status of a specific goal with the given ID to the provided new status (either "complete," "in progress," or "not started"). For example, to update the status of Goal 1 ("Learn a new language") from "Incomplete" to "Complete," you would enter:[UPDATE_GOAL_STATUS=#,complete][DELETE_GOAL=id] - Removes the goal with the given ID from your knowledge base. For example, to delete Goal 1 ("Learn a new language"), you would enter:[DELETE_GOAL=#id of goal from list goals]'
@@ -124,7 +125,7 @@ class CommandHandler():
                     
                     validation = validators.url(url)
                     if validation:
-                        print("URL is valid")
+                        #print("URL is valid")
                         content = handler.get_url(url, mode=mode)
                         self.command_output["GET_URL"] = f"GET_URL: {content}"
 

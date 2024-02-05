@@ -43,7 +43,7 @@ databasepath = os.path.join(current_dir, "storage/sqlite/")
 params = {
     "display_name": "Memoir+",
     "is_tab": False,
-    "ltm_limit": 5,
+    "ltm_limit": 2,
     "ego_summary_limit": 10,
     "is_roleplay": False,
     'memory_active': True,
@@ -196,20 +196,20 @@ def input_modifier(string, state, is_chat=False):
             print(unique_memories)
             print("---------------End Memories--------------------------")
             
-        print("Len mem:" + str(len(unique_memories)))
+            print("Len mem:" + str(len(unique_memories)))
         if len(unique_memories) > 0:
-            print("Adding User LTM")
+            #print("Adding User LTM")
             if params['memory_active'] == True:
-                string = "The following are memories from your past, you can use them as extra context. " + str(unique_memories) + string     
-        print("Commands output")
-        print(commands_output)
-        print("Len commands output")
-        print(len(commands_output))
-        if len(commands_output) > 0:
-            print("Adding Commands")
-            print(str(commands_output))
+                string = "(The following are memories from your past, you can use them as extra context. " + str(unique_memories) + ")" + string     
+        #print("Commands output")
+        #print(commands_output)
+        #print("Len commands output")
+        #print(len(commands_output))
+        #if len(commands_output) > 0:
+            #print("Adding Commands")
+            #print(str(commands_output))
             string = string + str(commands_output)    
-    print("STRING:" + str(string))
+    #print("STRING:" + str(string))
     return string
 
 
@@ -237,7 +237,7 @@ def output_modifier(string, state, is_chat=False):
         initiated_by_name = state['name2'].strip()
         if params['activate_narrator'] == True:
             if ChatHelper.check_if_narration(string) == True:
-                print("STM is a narration")
+                #print("STM is a narration")
                 initiated_by_name = "Narrator"
          
         stm = ShortTermMemory(databasefile)
@@ -291,7 +291,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         address = params['qdrant_address']
         ltm = LTM(collection,ltm_limit,verbose, address=address)
         dream_check = 0
-        print("Len of not indexed mems:" + str(len(mems_to_review)))
+        #print("Len of not indexed mems:" + str(len(mems_to_review)))
         
 
         if len(mems_to_review) >= int(params['ego_summary_limit']):
@@ -317,7 +317,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                     roleplay = True
                 if roleplay == True:
                     roleplay_message = "(These memories are part of a roleplay session, note that it was part of a roleplay in the memory summary.)"
-                print("Innitiated by:" + row[5])
+                #print("Innitiated by:" + row[5])
                 if str(row[5]) == "Narrator":
                     memory_text.append(f"{row[1]}")
                 else:
@@ -362,7 +362,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 for row in mems_to_review:
                     stm_user.update_mem_saved_to_longterm(row[0])
 
-            if verbose == True:
+            if params['verbose'] == True:
                 print("----------Memory Summary to save--------------")
                 print(str(response_text[-1]))
                 print("----------")
@@ -373,7 +373,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 tosave = str(response_text[-1])
                 botname = state['name2'].strip()
                 doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'emotions': str(unique_emotions), 'people': str(unique_people)}
-                if verbose == False:
+                if params['verbose'] == True:
                     print("Saving to Qdrant" + str(doc_to_upsert))
                 ltm.store(doc_to_upsert)
                 
@@ -442,7 +442,7 @@ def update_dreammode():
 
 def deep_dream():
     params['deep_dream'] = 1
-    bot_prefix_modifier("You are thinking to yourself...", dict(params['state']))
+    #bot_prefix_modifier("You are thinking to yourself...", dict(params['state']))
 
     pass
 
@@ -479,7 +479,7 @@ def ui():
     with gr.Accordion("Memoir+ v.001"):
         with gr.Row():
             gr.Markdown(textwrap.dedent("""
-        - If you find this extension useful, <a href="https://www.buymeacoffee.com/brucepro">Buy Me a Coffee:Brucepro</a>
+        - If you find this extension useful, <a href="https://www.buymeacoffee.com/brucepro">Buy Me a Coffee:Brucepro</a> or <a href="https://ko-fi.com/brucepro">Support me on Ko-fi</a>
         - For feedback or support, please raise an issue on https://github.com/brucepro/Memoir
         """))
 
@@ -494,7 +494,7 @@ def ui():
                 ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
             with gr.Row():
                 ego_summary_limit = gr.Slider(
-                    1, 100,
+                    0, 100,
                     step=1,
                     value=params['ego_summary_limit'],
                     label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
@@ -504,8 +504,8 @@ def ui():
             with gr.Row():
                 cstartdreammode = gr.Button("List Params in debug window")
                 cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
-                cstartdeepdream = gr.Button("Deep Dream 100 memories")
-                cstartdeepdream.click(lambda x: deep_dream(), inputs=cstartdeepdream, outputs=None)
+                #cstartdeepdream = gr.Button("Deep Dream 100 memories")
+                #cstartdeepdream.click(lambda x: deep_dream(), inputs=cstartdeepdream, outputs=None)
         with gr.Accordion("Settings"):
             with gr.Row():
                 activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')

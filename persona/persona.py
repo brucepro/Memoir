@@ -139,7 +139,7 @@ class Persona:
         commands_list = []
         for cmd in commands_in_string:
             if ":" in cmd:
-                print("Processing : command..." + str(cmd))
+                #print("Processing : command..." + str(cmd))
                 command_parts1 = cmd.split(',')
                 for item in command_parts1:
                     command_parts2 = item.split(':')
