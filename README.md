@@ -1,5 +1,5 @@
 # Memoir
- Memoir+ a persona extension for Text Gen Web UI. Includes memory, emotions, command handling and more. (This extension is still under active development. The memory format may change and may be code-breaking if you are using it. For now consider this a test branch until it is stable enough for a full release.)
+ Memoir+ a persona extension for Text Gen Web UI. Includes memory, emotions, command handling and more. 
 
 # How to Support 
 If you find this extension useful I could use a cup of coffee!  I have spent many nights working to get this program to this point. https://www.buymeacoffee.com/brucepro
