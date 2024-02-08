@@ -113,7 +113,9 @@ class LTM():
                 seen_comments.add(comment)
                 #formated_results.append("(" + result.payload['datetime'] + "'Memory':" + result.payload['comment'] + ", 'Emotions:" + result.payload['emotions'] + ", 'People':" + result.payload['people'] + ")")                
                 #formated_results.append("(" + result.payload['datetime'] + "Memory:" + escape(result.payload['comment']) + ",Emotions:" + escape(result.payload['emotions']) + ",People:" + escape(result.payload['people']) + ")")
-                formated_results.append("You remember:" + result.payload['comment'] + ": on " + result.payload['datetime'])
+                datetime_obj = datetime.strptime(result.payload['datetime'], "%Y-%m-%dT%H:%M:%S.%f")
+                date_str = datetime_obj.strftime("%Y-%m-%d")
+                formated_results.append(result.payload['comment'] + ": on " + str(date_str))
                 
             else:
                 if self.verbose:

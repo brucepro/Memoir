@@ -46,6 +46,9 @@ params = {
     "ltm_limit": 2,
     "ego_summary_limit": 10,
     "is_roleplay": False,
+    "ego_persona_name": "Ego",
+    "ego_persona_details": "[The subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. You focus on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]",
+    "ego_thinking_statement": "Here is a summary of the main topics discussed in these memories and extracting key points made by each speaker:",
     'memory_active': True,
     "current_selected_character": None,
     "qdrant_address": "http://localhost:6333",
@@ -77,7 +80,10 @@ def state_modifier(state):
     state['polarity_score'] = params['polarity_score']
     state['dream_mode'] = params['dream_mode']
     state['is_roleplay'] = params['is_roleplay']
-
+    state['ego_persona_name'] = params['ego_persona_name']
+    state['ego_persona_details'] = params['ego_persona_details']
+    
+    state['ego_thinking_statement'] = params['ego_thinking_statement']
     state['memory_active'] = params['memory_active']
     state['qdrant_address'] = params['qdrant_address']
     state['polarity_score'] = params['polarity_score']
@@ -200,7 +206,7 @@ def input_modifier(string, state, is_chat=False):
         if len(unique_memories) > 0:
             #print("Adding User LTM")
             if params['memory_active'] == True:
-                string = "(The following are memories from your past, you can use them as extra context. " + str(unique_memories) + ")" + string     
+                string = "(The following are memories from your past, you can use them as extra context. You remember:" + str(unique_memories) + ")" + string     
         #print("Commands output")
         #print(commands_output)
         #print("Len commands output")
@@ -301,9 +307,9 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             if params['use_thinking_emotes'] == True:
                 shared.processing_message = "Taking a moment to save long-term memories..."
             
-            bot_dream_persona = "You are Ego:[The subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. You focus on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]"
+            bot_dream_persona = "You are " + str(params['ego_persona_name']) + ": " + str(params['ego_persona_details'])
             
-            thinking_statement = "Here is a summary of the main topics discussed in these memories and extracting key points made by each speaker:  "
+            thinking_statement = str(params['ego_thinking_statement'])
           
             people = []
             memory_text = []
@@ -442,8 +448,6 @@ def update_dreammode():
 
 def deep_dream():
     params['deep_dream'] = 1
-    #bot_prefix_modifier("You are thinking to yourself...", dict(params['state']))
-
     pass
 
 
@@ -506,6 +510,14 @@ def ui():
                 cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
                 #cstartdeepdream = gr.Button("Deep Dream 100 memories")
                 #cstartdeepdream.click(lambda x: deep_dream(), inputs=cstartdeepdream, outputs=None)
+            with gr.Row():
+                ego_persona_name_textbox = gr.Textbox(show_label=False, value=params['ego_persona_name'], elem_id="ego_persona_name_textbox")
+                ego_persona_name_textbox.change(lambda x: params.update({'ego_persona_name': x}), ego_persona_name_textbox, None)
+                ego_persona_details_textarea = gr.TextArea(label="Ego Persona details", value=params['ego_persona_details'], elem_id="ego_persona_details")
+                ego_persona_details_textarea.change(lambda x: params.update({'ego_persona_details': x}), ego_persona_details_textarea, None)
+                ego_thinking_statement_textbox = gr.TextArea(label="Ego Thinking Statement", value=params['ego_thinking_statement'], elem_id="ego_thinking_statement_textbox")
+                ego_thinking_statement_textbox.change(lambda x: params.update({'ego_thinking_statement': x}), ego_thinking_statement_textbox, None)
+
         with gr.Accordion("Settings"):
             with gr.Row():
                 activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
