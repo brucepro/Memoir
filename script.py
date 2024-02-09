@@ -58,6 +58,7 @@ params = {
     'dream_mode': 0,
     'activate_narrator': False,
     'bot_long_term_memories': "",
+    'user_long_term_memories': "",
     'use_thinking_emotes': True,
     'state': [],
     'thinking_emotes': ['Deep in thought...','Pondering deeply...', 'Gathering my thoughts...','Organizing my ideas...', 'Taking it all in...','Absorbing the information provided...', 'Mulling it over...','Reflecting on your request...', 'Delving into the matter...','Diving deep into thought...', 'Thinking hard...','Concentrating intensely...', 'Considering all angles...','Examining every possibility...', 'Evaluating options...','Weighing up your request...', 'Deliberating carefully...','Carefully assessing the situation...', 'Musing over possibilities...','Dreamily pondering various outcomes...', 'Engrossed in thought...','Completely absorbed in my thoughts...', 'Analyzing information...','Dissecting your request into its constituent parts...', 'Formulating a response...','Creating the perfect reply for you...', 'Taking it all into account...','Incorporating every detail of your input...', 'Weighing up factors...','Considering the impact of each aspect of your request...', 'Meditating on a solution...','Seeking a response that will satisfy both you and my principles...', 'Reflecting intently...','Thoughtfully assessing every angle of your prompt...', 'Assessing the situation...','Carefully evaluating your needs...', 'Sifting through ideas...','Examining different approaches to address your query...', 'Piecing together a response...','Composing an answer that will meet your expectations...', 'Delving into the matter...','Diving deep into thought...', 'Taking it all in...','Absorbing the information provided...'],
@@ -95,7 +96,7 @@ def state_modifier(state):
     add the stop string. Also when the bot speaks as the user it is annoying,
     so fix for that. 
     '''
-    state['custom_stopping_strings'] = '"[DTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
+    state['custom_stopping_strings'] = '"(####The","[DTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
     params['state'] = state
     return state
 
@@ -125,6 +126,8 @@ def bot_prefix_modifier(string, state):
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     persona = Persona(databasefile)
     current_time = datetime.now()
+    datetime_obj = current_time
+    date_str = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
     n = 24
     past_time = current_time - timedelta(hours=n)
     past_time_str = past_time.strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -134,13 +137,33 @@ def bot_prefix_modifier(string, state):
     for data in emotions_data:
         polarity_total = polarity_total + data['average_polarity']
     if polarity_len != 0:
-        average_polarity = polarity_total/polarity_len
+        average_polarity = round((polarity_total/polarity_len), 4)
         bot_current_polarity = average_polarity
         params['polarity_score'] = average_polarity
-        string = "[DTime=" + str(current_time) + "][24hour Average Polarity Score=" + str(average_polarity) + "]" + string
+        string = "[DTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(average_polarity) + "]" + string
     else:
-        string = "[DTime=" + str(current_time) + "]" + string
-
+        string = "[DTime=" + str(date_str) + "]" + string
+    #insert memories into prefix.
+    if params['memory_active'] == True: 
+        memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
+        params['bot_long_term_memories'] = ""
+        params['user_long_term_memories'] = ""
+        unique_memories = []
+        for memory in memory_text:
+            if memory not in unique_memories:
+                unique_memories.append(memory)
+        if params['verbose'] == True:
+            print("--------------Memories---------------------------")
+            print(unique_memories)
+            print("---------------End Memories--------------------------")
+            
+            print("Len mem:" + str(len(unique_memories)))
+        if len(unique_memories) > 0:
+            #print("Adding User LTM")
+            if params['memory_active'] == True:
+                string = "(####The following are memories from your past, you can use them as extra context. You remember:" + str(unique_memories) + ")" + string   
+    if params['verbose'] == True:
+        print(string)    
     return string
 
 
@@ -191,27 +214,12 @@ def input_modifier(string, state, is_chat=False):
         ltm_limit = params['ltm_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, ltm_limit, verbose, address=address)
-        long_term_memories = ltm.recall(string)
-        memory_text = list(params['bot_long_term_memories']) + list(long_term_memories)
-        unique_memories = []
-        for memory in memory_text:
-            if memory not in unique_memories:
-                unique_memories.append(memory)
-        if params['verbose'] == True:
-            print("--------------Memories---------------------------")
-            print(unique_memories)
-            print("---------------End Memories--------------------------")
-            
-            print("Len mem:" + str(len(unique_memories)))
-        if len(unique_memories) > 0:
-            #print("Adding User LTM")
-            if params['memory_active'] == True:
-                string = "(The following are memories from your past, you can use them as extra context. You remember:" + str(unique_memories) + ")" + string     
+        params['user_long_term_memories'] = ltm.recall(string)
         #print("Commands output")
         #print(commands_output)
         #print("Len commands output")
         #print(len(commands_output))
-        #if len(commands_output) > 0:
+        if len(commands_output) > 0:
             #print("Adding Commands")
             #print(str(commands_output))
             string = string + str(commands_output)    
