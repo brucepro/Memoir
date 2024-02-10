@@ -50,6 +50,7 @@ params = {
     "ego_persona_details": "[The subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. You focus on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]",
     "ego_thinking_statement": "Here is a summary of the main topics discussed in these memories and extracting key points made by each speaker:",
     'memory_active': True,
+    'botprefix_mems_enabled': "Disabled",
     "current_selected_character": None,
     "qdrant_address": "http://localhost:6333",
     "query_output": "vdb search results",
@@ -96,7 +97,7 @@ def state_modifier(state):
     add the stop string. Also when the bot speaks as the user it is annoying,
     so fix for that. 
     '''
-    state['custom_stopping_strings'] = '"(####The","[DTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
+    state['custom_stopping_strings'] = '"[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
     params['state'] = state
     return state
 
@@ -140,30 +141,31 @@ def bot_prefix_modifier(string, state):
         average_polarity = round((polarity_total/polarity_len), 4)
         bot_current_polarity = average_polarity
         params['polarity_score'] = average_polarity
-        string = "[DTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(average_polarity) + "]" + string
+        string = "[DateTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(average_polarity) + "] " + string
     else:
-        string = "[DTime=" + str(date_str) + "]" + string
+        string = "[DTime=" + str(date_str) + "] " + string
     #insert memories into prefix.
-    if params['memory_active'] == True: 
-        memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
-        params['bot_long_term_memories'] = ""
-        params['user_long_term_memories'] = ""
-        unique_memories = []
-        for memory in memory_text:
-            if memory not in unique_memories:
-                unique_memories.append(memory)
-        if params['verbose'] == True:
-            print("--------------Memories---------------------------")
-            print(unique_memories)
-            print("---------------End Memories--------------------------")
+    if params['botprefix_mems_enabled'] == "Enabled":
+        if params['memory_active'] == True: 
+            memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
+
             
-            print("Len mem:" + str(len(unique_memories)))
-        if len(unique_memories) > 0:
-            #print("Adding User LTM")
-            if params['memory_active'] == True:
-                string = "(####The following are memories from your past, you can use them as extra context. You remember:" + str(unique_memories) + ")" + string   
-    if params['verbose'] == True:
-        print(string)    
+            params['bot_long_term_memories'] = ""
+            params['user_long_term_memories'] = ""
+            unique_memories = []
+            for memory in memory_text:
+                if memory not in unique_memories:
+                    unique_memories.append(memory)
+            if params['verbose'] == True:
+                print("--------------Memories---------------------------")
+                print(unique_memories)
+                print("---------------End Memories--------------------------")
+                
+                print("Len mem:" + str(len(unique_memories)))
+            if len(unique_memories) > 0:
+                if params['memory_active'] == True:
+                    string = "[You remember:" + str(unique_memories) + " ] " + string  
+    #print(string)    
     return string
 
 
@@ -222,8 +224,29 @@ def input_modifier(string, state, is_chat=False):
         if len(commands_output) > 0:
             #print("Adding Commands")
             #print(str(commands_output))
-            string = string + str(commands_output)    
+            string = string + " [" + str(commands_output) + "]"    
     #print("STRING:" + str(string))
+    #insert memories into prefix.
+    if params['botprefix_mems_enabled'] == "Disabled":
+        if params['memory_active'] == True: 
+            memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
+
+            
+            params['bot_long_term_memories'] = ""
+            params['user_long_term_memories'] = ""
+            unique_memories = []
+            for memory in memory_text:
+                if memory not in unique_memories:
+                    unique_memories.append(memory)
+            if params['verbose'] == True:
+                print("--------------Memories---------------------------")
+                print(unique_memories)
+                print("---------------End Memories--------------------------")
+                
+                print("Len mem:" + str(len(unique_memories)))
+            if len(unique_memories) > 0:
+                string = "[You remember:" + str(unique_memories) + " ] " + string   
+    #print(string)
     return string
 
 
@@ -525,7 +548,13 @@ def ui():
                 ego_persona_details_textarea.change(lambda x: params.update({'ego_persona_details': x}), ego_persona_details_textarea, None)
                 ego_thinking_statement_textbox = gr.TextArea(label="Ego Thinking Statement", value=params['ego_thinking_statement'], elem_id="ego_thinking_statement_textbox")
                 ego_thinking_statement_textbox.change(lambda x: params.update({'ego_thinking_statement': x}), ego_thinking_statement_textbox, None)
-
+            with gr.Row():
+                mems_in_bot_prefix = gr.Radio(
+                    choices={"Enabled": "true", "Disabled": "false"},
+                    label="Memories in Bot Prefix (Saves context)",
+                    value=params['botprefix_mems_enabled'],
+                )
+                mems_in_bot_prefix.change(lambda x: params.update({'botprefix_mems_enabled': x}), mems_in_bot_prefix, None)
         with gr.Accordion("Settings"):
             with gr.Row():
                 activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
