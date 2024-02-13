@@ -561,7 +561,7 @@ def ui():
                 activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
                 activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
                 activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
-                activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
+                activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memories.')
                 activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
             with gr.Row():
                 use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
