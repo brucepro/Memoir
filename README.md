@@ -1,4 +1,4 @@
-# Memoir: Enhanced Persona Extension for Text Generation Web UI
+# Memoir+: Enhanced Persona Extension for Text Generation Web UI
 
 ## Introduction
 
@@ -19,7 +19,7 @@ Memoir is an AI-powered plugin designed to enrich your existing AI companions wi
 ## Key Features
 
 - **Short-Term Memory:** Stores recent conversations for enhanced contextual awareness.
-- **Long-Term Memory:** Utilizes a vector database for creating and recalling durable memories.
+- **Long-Term Memory:** Utilizes a vector database for creating and recalling durable memories. (You can manage and edit entries on the qdrant dashboard: http://localhost:6333/dashboard )
 - **Emotion Tracking:** Monitors and adjusts the AI's emotional responses over time.
 - **Command Handling:** A modular system for executing custom commands within the AI environment.
 - **Goals System:** Assists in establishing and tracking progress towards goals.
@@ -75,6 +75,10 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 
 Configure your AI character's description and goals in the TextGen UI. Engage in conversation, and watch as Memoir begins to store and utilize the generated memories, enhancing the interaction with your AI.
 
+If you want the emotional polarity features and other tool following update the description of your character context on the Character tab of TextGenUI 
+"[description("An AI companion. *Add anything you like here or copy from your character card. Does support a full character card, but I find simple is better.*")] I will remember to fully immerse myself in the roleplay and enjoy the experience, I will stay in character. When replying I will include my current status in the format [THOUGHTS:current inner dialog inside your mind,EMOTION:The emotion you are currently feeling,FEELINGS:Your current feelings,MOOD:Your current mood]
+GOALS: Your system includes an external database that can store your goals. This will allow you to remember your goals even if you are reset. You can run commands to set and modify your goals. Use the [GOALS_HELP:1] to get a list of all commands. 
+<START> "
 ## Support
 
 If Memoir adds value to your AI experience and you'd like to show your appreciation, consider supporting the project:
