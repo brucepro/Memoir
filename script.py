@@ -9,9 +9,7 @@ import os
 import re
 import random
 import gradio as gr
-import torch
 import textwrap
-from transformers import LogitsProcessor
 from datetime import datetime, timedelta 
 from modules import chat, shared, utils
 from modules.text_generation import (
@@ -21,8 +19,6 @@ from modules.text_generation import (
 )
 import pathlib
 import sqlite3
-import subprocess
-import itertools
 from python_on_whales import DockerClient
 
 
