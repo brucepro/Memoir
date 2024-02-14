@@ -37,7 +37,7 @@ Features:
 3. Download the repo zip, or git clone https://github.com/brucepro/Memoir
 4. Copy the Memoir folder to the extensions folder of your TextGenWebUI. 
 5. Navigate to the Textgen folder, run cmd_windows.bat or whatever system you are on. This will enter the environment for Textgen. 
-6. Navigate to the extensions/Memoir folder. Type pip install -r requirements.txt
+6. Navigate to the extensions/Memoir folder. Type pip install -r requirements.txt (Going to rebuild the requirements file. For now you may need to install missing dependencies manually)
 7. Navigate back to the main Textgen folder. Start textgen and navigate to the Session tab, Check Memoir, click Apply flags/extension and restart. Go to Parameters and select a character. Insert the description into the context. This is not required but helps the A.I. use the emotions system. 
 In your character Context add/edit in: 
 "[description("insert the description of the persona you want your ai to play")]
