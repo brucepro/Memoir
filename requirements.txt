@@ -1,1 +1,5 @@
-
+python_on_whales
+textblob
+validators
+qdrant_client
+sentence_transformers
