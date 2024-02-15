@@ -1,70 +1,95 @@
-# Memoir
- Memoir+ a persona extension for Text Gen Web UI. Includes memory, emotions, command handling and more. 
+# Memoir+: Enhanced Persona Extension for Text Generation Web UI
 
-# How to Support 
-If you find this extension useful I could use a cup of coffee!  I have spent many nights working to get this program to this point. https://www.buymeacoffee.com/brucepro
+## Introduction
 
+Memoir is an AI-powered plugin designed to enrich your existing AI companions within the Text Generation Web UI. With advanced memory capabilities and emotional intelligence, Memoir transforms your interactions with AI into a more nuanced and human-like experience.
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F7U45XV)
+## Table of Contents
 
-# About the extension 
-Memoir+ is an AI-powered plugin that enhances your bots long term memory and personal identity by integrating with your existing personified AI companion.
-With Memoir+, your agent can store, search, and retrieve memories.
+- [Introduction](#introduction)
+- [Key Features](#key-features)
+- [Configuration](#configuration)
+- [Future Development](#future-development)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Support](#support)
+- [Contributing](#contributing)
+- [License](#license)
 
-Features: 
--Short-Term Memory - sqlite database of conversations that are used by the A.I. to create long term memories. 
+## Key Features
 
--Long-Term Memory - A qdrant vector database that uses the Ego system to review conversations and store long term memories for recall.
+- **Short-Term Memory:** Stores recent conversations for enhanced contextual awareness.
+- **Long-Term Memory:** Utilizes a vector database for creating and recalling durable memories. (You can manage and edit entries on the qdrant dashboard: http://localhost:6333/dashboard )
+- **Emotion Tracking:** Monitors and adjusts the AI's emotional responses over time.
+- **Command Handling:** A modular system for executing custom commands within the AI environment.
+- **Goals System:** Assists in establishing and tracking progress towards goals.
 
--Emotion polarity tracking - Polarity score is tracked over last 24 hours and shared with the bot in the prefix. This allows the bot to keep track of the emotional state.
+## Configuration
 
--Command Handler: Supports a modular system to add new commands that your bot can use. This part is still experimental. [GET_URL=url,output] is currently working for just html pages. Will be improving commands as the memory system is finalized. 
+Memoir offers detailed configuration options for personalizing your AI's memory and personality traits:
 
---There is also shell access to a ubuntu docker. This is in progress and will be in a future release. For now it is commented out.
+### Memory Settings
 
---Will also be adding in the ability to research topics
+- **Long Term Memory Result Count:** Adjust the number of memories to incorporate into the current context for a richer interaction.
+- **Short Term Memory Processing Interval:** Set the frequency of converting short-term to long-term memories to optimize performance and relevance.
 
---Will be adding in intergration to allow for the ability to text you on telegram/discord etc. 
+### Ego Configuration
 
---If you have suggestions for features, please share. 
+- **Ego Name:** Customize the ego name to correspond with your AI's identity, enhancing recognition and personalization.
+- **Ego Persona Details:** Craft a detailed persona for your AI's subconscious mind to guide its summarization and understanding of conversations.
+- **Ego Thinking Statement:** Direct your AI on how to synthesize conversations and identify key points, allowing for creative experimentation.
 
--Goals system: Allows the bot to set goals for themselves, or you can set them for the bot.
+### Memory in Bot Prefix
 
-# Setup
-1. Install Text generation web UI - https://github.com/oobabooga/text-generation-webui
-2. Requires docker. You can use Docker destop if you like. https://www.docker.com/products/docker-desktop/
+- **Enable/Disable Saving Context:** Control whether memories are added to the bot's prefix, trading off between preserving context and conversational depth.
 
-3. Download the repo zip, or git clone https://github.com/brucepro/Memoir
-4. Copy the Memoir folder to the extensions folder of your TextGenWebUI. 
-5. Navigate to the Textgen folder, run cmd_windows.bat or whatever system you are on. This will enter the environment for Textgen. 
-6. Navigate to the extensions/Memoir folder. Type pip install -r requirements.txt (Going to rebuild the requirements file. For now you may need to install missing dependencies manually)
-7. Navigate back to the main Textgen folder. Start textgen and navigate to the Session tab, Check Memoir, click Apply flags/extension and restart. Go to Parameters and select a character. Insert the description into the context. This is not required but helps the A.I. use the emotions system. 
-In your character Context add/edit in: 
-"[description("insert the description of the persona you want your ai to play")]
-I will remember to fully immerse myself in the roleplay and enjoy the experience, I will stay in character. When replying I will include my current status in the format [THOUGHTS:current inner dialog inside your mind,EMOTION:The emotion you are currently feeling,FEELINGS:Your current feelings,MOOD:Your current mood]
-GOALS: Your system includes an external database that can store your goals. This will allow you to remember your goals even if you are reset. You can run commands to set and modify your goals. Use the [GOALS_HELP] to get a list of all commands."
-8. Go to the chat tab and chat or instruct tab etc. The system will process the memories into long term memories every 10 prompts/replies, you can adjust this in the Memory settings near the middle of the page. Depending on your LLM you are using adjust the Long Term Memory Results Count to higher or lower. Higher values may overwhelm the context.
+### Narration and Roleplay
 
-Debug buttons will show active params in the console. 
+- **Activate Narrator:** Omit character names from emotes to better set the scene during narrative passages.
+- **Activate Roleplay Flag:** Indicate to the system when it is summarizing roleplay sessions to adjust the handling of memories.
 
-Ego name - Sometimes this works better if you change it to Botname's Ego
-Ego Persona details - This is the persona of the Ego. You can personalize it to your Botname if you like. You can also experiment here. 
-Ego Thinking Statement - You can experiment with this but I find the statement I have works pretty well. These are the instructions to Ego on how to summarize. 
+### Debugging and Memory Management
 
-Memories in Bot Prefix when enabled will only add the memories in the bot prefix, these memories won't be available for future discussion in the chat. It saves context at the loss of a bit of depth.
+- **Memory Saving Toggle:** Swiftly enable or disable memory recording for troubleshooting or adjusting privacy settings.
+- **Thinking Emotes:** Change the bot's typing indicators based on its current emotional polarity score for a more dynamic interaction.
 
-Activate narrator - This removes the name for emotes, so if you want to Narate a specific action, you can do this *action setting the scene* and name won't be attached in memory. Doesn't impact the chat window. 
+### Character Management
 
-Activate Roleplay flag - This will notify the Ego system that the memories being summarized are a roleplay.
+- **Delete Characters:** Efficiently manage and delete character data, including all associated memories and emotional data.
 
-Uncheck to disable the saving of memories - Disables STM, LTM and summaries. 
+## Future Development
 
-Thinking Emotes - These are based on polarity score and change up the "Typing.." depending on polarity.
+- **Docker/Shell Access:** Upcoming feature for advanced control and system automation.
+- **Topic Research:** Enhanced capabilities for information gathering and utilization.
+- **Messaging Integrations:** For direct notifications and updates across various messaging platforms.
 
-Characters available to delete: Select the character from the dropdown. Click Destroy All memories. This deletes the sqlite database and the vector database. It does not delete the character in TextGen. 
+## Installation
 
+1. Install the Text Generation Web UI as per instructions on [GitHub](https://github.com/oobabooga/text-generation-webui).
+2. Get Docker Desktop from [Docker](https://www.docker.com/products/docker-desktop/).
+3. Clone the Memoir repository: `git clone https://github.com/brucepro/Memoir`.
+4. Move the Memoir folder into the extensions directory of your TextGenWebUI installation.
+5. In the Memoir folder, execute `pip install -r requirements.txt` to install dependencies.
 
+## Usage
 
+Configure your AI character's description and goals in the TextGen UI. Engage in conversation, and watch as Memoir begins to store and utilize the generated memories, enhancing the interaction with your AI.
 
-# Support
-I am excited to continue working on this project. If you find it useful please consider supporting me. https://www.buymeacoffee.com/brucepro
+If you want the emotional polarity features and other tool following update the description of your character context on the Character tab of TextGenUI 
+"[description("An AI companion. *Add anything you like here or copy from your character card. Does support a full character card, but I find simple is better.*")] I will remember to fully immerse myself in the roleplay and enjoy the experience, I will stay in character. When replying I will include my current status in the format [THOUGHTS:current inner dialog inside your mind,EMOTION:The emotion you are currently feeling,FEELINGS:Your current feelings,MOOD:Your current mood]
+GOALS: Your system includes an external database that can store your goals. This will allow you to remember your goals even if you are reset. You can run commands to set and modify your goals. Use the [GOALS_HELP:1] to get a list of all commands. 
+<START> "
+## Support
+
+If Memoir adds value to your AI experience and you'd like to show your appreciation, consider supporting the project:
+
+- [Buy me a coffee](https://www.buymeacoffee.com/brucepro)
+- [Ko-fi](https://ko-fi.com/F1F7U45XV)
+
+## Contributing
+
+Contributions, suggestions, and feedback are always welcome. Please submit issues or pull requests on GitHub, or contact us directly with your ideas and suggestions.
+
+## License
+
+Memoir is made available under the MIT License. For more details, see the LICENSE file in the repository.
