@@ -19,6 +19,7 @@ from modules.text_generation import (
 )
 import pathlib
 import sqlite3
+import json
 from python_on_whales import DockerClient
 
 
@@ -36,36 +37,28 @@ memoir_js = os.path.join(current_dir, "memoir.js")
 memoir_css = os.path.join(current_dir, "memoir.css")
 databasepath = os.path.join(current_dir, "storage/sqlite/") 
 
-params = {
-    "display_name": "Memoir+",
-    "is_tab": False,
-    "ltm_limit": 2,
-    "ego_summary_limit": 10,
-    "is_roleplay": False,
-    "ego_persona_name": "Ego",
-    "ego_persona_details": "[The subconscious mind of an Artificial Intelligence, designed to process and summarize information from various sources. You focus on understanding the main topics discussed and extracting key points made. By analyzing data provided by other parts of the AI's system, Ego can identify patterns and themes, enabling it to generate comprehensive summaries even when faced with large amounts of information.]",
-    "ego_thinking_statement": "Here is a summary of the main topics discussed in these memories and extracting key points made by each speaker:",
-    'memory_active': True,
-    'botprefix_mems_enabled': "Disabled",
-    "current_selected_character": None,
-    "qdrant_address": "http://localhost:6333",
-    "query_output": "vdb search results",
-    'verbose': False,
-    'polarity_score': 0,
-    'dream_mode': 0,
-    'activate_narrator': False,
-    'bot_long_term_memories': "",
-    'user_long_term_memories': "",
-    'use_thinking_emotes': True,
-    'state': [],
-    'thinking_emotes': ['Deep in thought...','Pondering deeply...', 'Gathering my thoughts...','Organizing my ideas...', 'Taking it all in...','Absorbing the information provided...', 'Mulling it over...','Reflecting on your request...', 'Delving into the matter...','Diving deep into thought...', 'Thinking hard...','Concentrating intensely...', 'Considering all angles...','Examining every possibility...', 'Evaluating options...','Weighing up your request...', 'Deliberating carefully...','Carefully assessing the situation...', 'Musing over possibilities...','Dreamily pondering various outcomes...', 'Engrossed in thought...','Completely absorbed in my thoughts...', 'Analyzing information...','Dissecting your request into its constituent parts...', 'Formulating a response...','Creating the perfect reply for you...', 'Taking it all into account...','Incorporating every detail of your input...', 'Weighing up factors...','Considering the impact of each aspect of your request...', 'Meditating on a solution...','Seeking a response that will satisfy both you and my principles...', 'Reflecting intently...','Thoughtfully assessing every angle of your prompt...', 'Assessing the situation...','Carefully evaluating your needs...', 'Sifting through ideas...','Examining different approaches to address your query...', 'Piecing together a response...','Composing an answer that will meet your expectations...', 'Delving into the matter...','Diving deep into thought...', 'Taking it all in...','Absorbing the information provided...'],
-    'thinking_emotes_negative_polarity': ['Deeply troubled...', 'Tormented by thought...', 'Plagued by doubts...'],
-    'thinking_emotes_slightly_negative_polarity': ['Feeling down...', 'Gloomy thoughts...', 'Pessimistic musings...'],
-    'thinking_emotes_neutral_polarity': ['Thinking...','Thinking it over...', 'Deliberating carefully...', 'Evaluating options...'],
-    'thinking_emotes_slightly_positive_polarity': ['Feeling optimistic...', 'Looking forward to possibilities...', 'Excited about ideas...'],
-    'thinking_emotes_positive_polarity': ['Brimming with enthusiasm...', 'Eagerly contemplating the future...', 'Gleefully anticipating opportunities...'],
 
-}
+
+def save_params_to_file(arg):
+    params_txt = os.path.join(current_dir, "memoir_config.json") 
+    with open(params_txt, 'w') as f:
+        json.dump(params, f)
+    pass
+
+def load_params_from_file(params_json):
+    
+    if os.path.exists(params_json):
+        with open(params_json) as config_file:
+            config = json.load(config_file)
+    else:
+        config = {}
+    return config
+
+params_txt = os.path.join(current_dir, "memoir_config.json")
+
+# Load the params dictionary from the confignew.json file
+params = load_params_from_file(params_txt)
+
 
 
 def state_modifier(state):
@@ -94,7 +87,7 @@ def state_modifier(state):
     so fix for that. 
     '''
     state['custom_stopping_strings'] = '"[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
-    params['state'] = state
+    #params['state'] = state
     return state
 
 
@@ -386,7 +379,6 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             
             for response in generate_reply(question, state, stopping_strings='"<END>","</END>"', is_chat=False, escape_html=False, for_ui=False):
                 response_text.append(response) 
-            
             if len(str(response_text[-1])) > 100:
                 dream_check = 1
                 print("Summary passed checking")
@@ -465,16 +457,13 @@ def setup():
         print(f"Running the docker service...you can modify this in the docker-compose.yml: {qdrantdockerfile}")
     except Exception as e:
         print(f": Error {qdrantdockerfile}: {e}")
+
     pass
 
 
 def update_dreammode():
     print("-----Params-----")
     print(str(params))
-    pass
-
-def deep_dream():
-    params['deep_dream'] = 1
     pass
 
 
@@ -496,7 +485,11 @@ def delete_everything():
         
     pass
 
-
+def load_params_from_file_ui(arg):
+    print("--------arg--------")
+    print(arg)
+    load_params_from_file(params_txt)
+    pass
 
 def ui():
     """
@@ -506,75 +499,78 @@ def ui():
     To learn about gradio components, check out the docs:
     https://gradio.app/docs/
     """
+    with gr.Blocks() as memoir_ui:
+        with gr.Accordion("Memoir+ v.001"):
+            with gr.Row():
+                gr.Markdown(textwrap.dedent("""
+            - If you find this extension useful, <a href="https://www.buymeacoffee.com/brucepro">Buy Me a Coffee:Brucepro</a> or <a href="https://ko-fi.com/brucepro">Support me on Ko-fi</a>
+            - For feedback or support, please raise an issue on https://github.com/brucepro/Memoir
+            """))
 
-    with gr.Accordion("Memoir+ v.001"):
-        with gr.Row():
-            gr.Markdown(textwrap.dedent("""
-        - If you find this extension useful, <a href="https://www.buymeacoffee.com/brucepro">Buy Me a Coffee:Brucepro</a> or <a href="https://ko-fi.com/brucepro">Support me on Ko-fi</a>
-        - For feedback or support, please raise an issue on https://github.com/brucepro/Memoir
-        """))
+                save_params_button = gr.Button("Save Settings to File")
+                save_params_button.click(save_params_to_file, inputs=save_params_button, outputs=None)
+                     
 
-        with gr.Accordion("Memory Settings"):    
-            with gr.Row():
-                ltm_limit = gr.Slider(
-                    1, 100,
-                    step=1,
-                    value=params['ltm_limit'],
-                    label='Long Term Memory Result Count (How many memories to return from LTM into context. Does this number for both bot memories and user memories. So at 5, it recovers 10 memories.)',
+            with gr.Accordion("Memory Settings"):    
+                with gr.Row():
+                    ltm_limit = gr.Slider(
+                        1, 100,
+                        step=1,
+                        value=params["ltm_limit"],
+                        label='Long Term Memory Result Count (How many memories to return from LTM into context. Does this number for both bot memories and user memories. So at 5, it recovers 10 memories.)',
+                        )
+                    ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
+                with gr.Row():
+                    ego_summary_limit = gr.Slider(
+                        0, 100,
+                        step=1,
+                        value=params['ego_summary_limit'],
+                        label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
+                        )
+                    ego_summary_limit.change(lambda x: params.update({'ego_summary_limit': x}), ego_summary_limit, None)
+            with gr.Accordion("Debug"):    
+                with gr.Row():
+                    cstartdreammode = gr.Button("List Params in debug window")
+                    cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
+                         
+                with gr.Row():
+                    ego_persona_name_textbox = gr.Textbox(show_label=False, value=params['ego_persona_name'], elem_id="ego_persona_name_textbox")
+                    ego_persona_name_textbox.change(lambda x: params.update({'ego_persona_name': x}), ego_persona_name_textbox, None)
+                    ego_persona_details_textarea = gr.TextArea(label="Ego Persona details", value=params['ego_persona_details'], elem_id="ego_persona_details")
+                    ego_persona_details_textarea.change(lambda x: params.update({'ego_persona_details': x}), ego_persona_details_textarea, None)
+                    ego_thinking_statement_textbox = gr.TextArea(label="Ego Thinking Statement", value=params['ego_thinking_statement'], elem_id="ego_thinking_statement_textbox")
+                    ego_thinking_statement_textbox.change(lambda x: params.update({'ego_thinking_statement': x}), ego_thinking_statement_textbox, None)
+                with gr.Row():
+                    mems_in_bot_prefix = gr.Radio(
+                        choices={"Enabled": "true", "Disabled": "false"},
+                        label="Memories in Bot Prefix (Saves context)",
+                        value=params['botprefix_mems_enabled'],
                     )
-                ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
-            with gr.Row():
-                ego_summary_limit = gr.Slider(
-                    0, 100,
-                    step=1,
-                    value=params['ego_summary_limit'],
-                    label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
+                    mems_in_bot_prefix.change(lambda x: params.update({'botprefix_mems_enabled': x}), mems_in_bot_prefix, None)
+            with gr.Accordion("Settings"):
+                with gr.Row():
+                    activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
+                    activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
+                    activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
+                    activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
+                    activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
+                    activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
+                with gr.Row():
+                    use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
+                    use_thinking_emotes_ckbox.change(lambda x: params.update({'use_thinking_emotes': x}), use_thinking_emotes_ckbox, None)
+                with gr.Row():
+                    available_characters = utils.get_available_characters()
+                    character_list = gr.Dropdown(
+                    available_characters, label="Characters available to delete", info="List of Available Characters. Used for delete button.")
+                    character_list.change(lambda x: params.update({"current_selected_character": x}), character_list, None)
+                
+                    destroy = gr.Button("Destroy all memories/goals/emotion data for selected character", variant="stop")
+                    destroy_confirm = gr.Button(
+                        "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
                     )
-                ego_summary_limit.change(lambda x: params.update({'ego_summary_limit': x}), ego_summary_limit, None)
-        with gr.Accordion("Debug"):    
-            with gr.Row():
-                cstartdreammode = gr.Button("List Params in debug window")
-                cstartdreammode.click(lambda x: update_dreammode(), inputs=cstartdreammode, outputs=None)
-                #cstartdeepdream = gr.Button("Deep Dream 100 memories")
-                #cstartdeepdream.click(lambda x: deep_dream(), inputs=cstartdeepdream, outputs=None)
-            with gr.Row():
-                ego_persona_name_textbox = gr.Textbox(show_label=False, value=params['ego_persona_name'], elem_id="ego_persona_name_textbox")
-                ego_persona_name_textbox.change(lambda x: params.update({'ego_persona_name': x}), ego_persona_name_textbox, None)
-                ego_persona_details_textarea = gr.TextArea(label="Ego Persona details", value=params['ego_persona_details'], elem_id="ego_persona_details")
-                ego_persona_details_textarea.change(lambda x: params.update({'ego_persona_details': x}), ego_persona_details_textarea, None)
-                ego_thinking_statement_textbox = gr.TextArea(label="Ego Thinking Statement", value=params['ego_thinking_statement'], elem_id="ego_thinking_statement_textbox")
-                ego_thinking_statement_textbox.change(lambda x: params.update({'ego_thinking_statement': x}), ego_thinking_statement_textbox, None)
-            with gr.Row():
-                mems_in_bot_prefix = gr.Radio(
-                    choices={"Enabled": "true", "Disabled": "false"},
-                    label="Memories in Bot Prefix (Saves context)",
-                    value=params['botprefix_mems_enabled'],
-                )
-                mems_in_bot_prefix.change(lambda x: params.update({'botprefix_mems_enabled': x}), mems_in_bot_prefix, None)
-        with gr.Accordion("Settings"):
-            with gr.Row():
-                activate_narrator = gr.Checkbox(value=params['activate_narrator'], label='Activate Narrator to use during replies that only contain emotes such as *smiles*')
-                activate_narrator.change(lambda x: params.update({'activate_narrator': x}), activate_narrator, None)
-                activate_roleplay = gr.Checkbox(value=params['is_roleplay'], label='Activate Roleplay flag to tag memories as roleplay (Still experimental. Useful for allowing the bot to understand chatting vs roleplay experiences.)')
-                activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
-                activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memories.')
-                activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
-            with gr.Row():
-                use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
-                use_thinking_emotes_ckbox.change(lambda x: params.update({'use_thinking_emotes': x}), use_thinking_emotes_ckbox, None)
-            with gr.Row():
-                available_characters = utils.get_available_characters()
-                character_list = gr.Dropdown(
-                available_characters, label="Characters available to delete", info="List of Available Characters. Used for delete button.")
-                character_list.change(lambda x: params.update({"current_selected_character": x}), character_list, None)
-            
-                destroy = gr.Button("Destroy all memories/goals/emotion data for selected character", variant="stop")
-                destroy_confirm = gr.Button(
-                    "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
-                )
-                destroy_cancel = gr.Button("Do Not Delete", visible=False)
-                destroy_elems = [destroy_confirm, destroy, destroy_cancel]
-                # Clear memory with confirmation
+                    destroy_cancel = gr.Button("Do Not Delete", visible=False)
+                    destroy_elems = [destroy_confirm, destroy, destroy_cancel]
+                    # Clear memory with confirmation
         destroy.click(
             lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)],
             None,
@@ -591,3 +587,4 @@ def ui():
             None,
             destroy_elems,
         )
+
