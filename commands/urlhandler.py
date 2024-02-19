@@ -10,7 +10,7 @@ class UrlHandler():
         self.character_name = character_name
         pass
 
-    def get_url(self, url, mode='input'):
+    def get_url(self, url, mode='output'):
         urls = [url]
         loader = SeleniumURLLoader(urls=urls)
         

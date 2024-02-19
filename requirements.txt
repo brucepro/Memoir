@@ -10,3 +10,4 @@ python-magic-bin
 pypdf
 pypandoc
 rapidocr-onnxruntime
+selenium
