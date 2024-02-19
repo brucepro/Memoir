@@ -124,7 +124,7 @@ class CommandHandler():
                     url =  str(args.get("arg1"))
                     
                     if args.get("arg2"):
-                        mode = str(args.get("arg2"))
+                        mode = str(args.get("arg2")).lower().strip()
                     else:
                         mode = 'output'
                     
