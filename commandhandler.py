@@ -60,7 +60,13 @@ class CommandHandler():
         print("COMMANDS:" + str(commands_list))
         emotion_output = []
         if len(commands_list) > 0:
+            #make sure all the commands are unique and not being spammed. 
+            unique_cmds = []
             for cmd in commands_list:
+                if cmd not in unique_cmds:
+                    unique_cmds.append(cmd)
+                    
+            for cmd in unique_cmds:
                 #GOAL related commands
                 if isinstance(cmd, dict) and "ADD_GOAL" in cmd:
                 # Get the value of the key "ADD_GOAL", which should be another dictionary
