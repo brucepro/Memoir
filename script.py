@@ -561,7 +561,7 @@ def ui():
                 with gr.Row():
                     gr.Markdown(textwrap.dedent("""
                 - The RAG system uses the langchain loaders. It saves to a unique collection in the qdrant database called botname_rag_data
-                - Commands are [FILE_LOAD=filelocation - this can be on your filesystem or online. Also supports directory loading but that uses the unstructured text loader so isn't as nice as using the specific loaders like .pdf, .epud etc.]
+                - Commands are [FILE_LOAD=filelocation - this can be on your filesystem or online. Also supports directory loading but that uses the unstructured text loader so isn't as nice as using the specific loaders like .pdf, .epub etc.]
                 - [GET_URL=url,output] - The output field will output the contents to the bot context. 
                 - Both commands output to the current context and save to the RAG system. Will work on setting a flag for this later. 
                 """))
