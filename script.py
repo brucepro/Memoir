@@ -220,10 +220,11 @@ def input_modifier(string, state, is_chat=False):
         username = state['name1'].strip()
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
+        rag_limit = params['rag_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, ltm_limit, verbose, address=address)
         params['user_long_term_memories'] = ltm.recall(string)
-        rag = RAG_DATA_MEMORY(collection,ltm_limit,verbose, address=address)
+        rag = RAG_DATA_MEMORY(collection,rag_limit,verbose, address=address)
         params['user_rag_data'] = rag.recall(string)
         
         if len(commands_output) > 0:
@@ -300,10 +301,11 @@ def output_modifier(string, state, is_chat=False):
         username = state['name1'].strip()
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
+        rag_limit = params['rag_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, ltm_limit, verbose,  address=address)
         params['bot_long_term_memories'] = ltm.recall(string)
-        rag = RAG_DATA_MEMORY(collection,ltm_limit,verbose, address=address)
+        rag = RAG_DATA_MEMORY(collection,rag_limit,verbose, address=address)
         params['bot_rag_data'] = rag.recall(string)
     if params['dream_mode'] == 0:
         #add the output of commands
