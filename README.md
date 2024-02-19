@@ -26,13 +26,21 @@ Memoir is an AI-powered plugin designed to enrich your existing AI companions wi
 - **Goals System:** Assists in establishing and tracking progress towards goals.
 - **RAG System:** Ability to ingest urls and files. Uses langchain community loaders for supported filetypes. For .epub support you may need to install (https://github.com/jgm/pandoc)
 Command Structure:
+
 YES:
+
 [FILE_LOAD=https://arxiv.org/pdf/2402.10790.pdf]
+
 [FILE_LOAD=C:/pdfs/2402.10790.pdf]
+
 [FILE_LOAD=C:/pdfs/] - Will use unstructured loader. Better to use the pdf loader.
+
 [GET_URL=https://www.npr.org/sections/world/, output]
+
 NO:
+
 [FILE_LOAD=https://www.npr.org/sections/world/] - Have not added the logic for no file extension on urls for file loader yet.
+
 
 
 
