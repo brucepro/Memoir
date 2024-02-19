@@ -5,14 +5,18 @@ CommandHandler.py
 from extensions.Memoir.goals.goal import Goal
 from extensions.Memoir.persona.persona import Persona
 from extensions.Memoir.commands.urlhandler import UrlHandler
+from extensions.Memoir.commands.file_load import File_Load
+
+import os
 import re
 from sqlite3 import connect
 import pathlib
 import validators
 
 class CommandHandler():
-    def __init__(self, db_path):
+    def __init__(self, db_path, character_name):
         self.db_path = db_path
+        self.character_name = character_name
         self.commands = {}
         self.command_output = {}
 
@@ -27,23 +31,24 @@ class CommandHandler():
         for cmd in commands_in_string:
             command_processed=False
             if command_processed==False:
+                if cmd == "LIST_GOALS":
+                    # Create a new dictionary object for this command
+                    commands_list.append({"LIST_GOALS": {"arg1": "none"}})
+                if cmd == "GOALS_HELP":
+                    # Create a new dictionary object for this command
+                    commands_list.append({"GOALS_HELP": {"arg1": "none"}})
                 if "=" in cmd:
                     command_processed=True
-                    #print("Processing = command..." + str(cmd))
+                    print("Processing = command..." + str(cmd))
                     command_parts = cmd.split('=')
-                    if len(command_parts) == 1:
-                        # If there's no equal sign, the command is just an action without arguments
-                        if command_parts[0] == "LIST_GOALS":
-                            # Create a new dictionary object for this command
-                            commands_list.append({"LIST_GOALS": {"arg1": "none"}})
-                    else:
-                        # Create a new dictionary object for this command
-                        commands_list.append({command_parts[0]: {f"arg{i+1}": arg for i, arg in enumerate(command_parts[1].split(','))}})
+                    
+                    # Create a new dictionary object for this command
+                    commands_list.append({command_parts[0]: {f"arg{i+1}": arg for i, arg in enumerate(command_parts[1].split(','))}})
             if command_processed==False:
                 if ":" in cmd:
                 
                     command_processed=True
-                    #print("Processing : command..." + str(cmd))
+                    print("Processing : command..." + str(cmd))
                     command_parts1 = cmd.split(',')
                     #take each each one and break it down. 
                     for item in command_parts1:
@@ -52,7 +57,7 @@ class CommandHandler():
                         if len(command_parts2) > 1:
                             commands_list.append({command_parts2[0].strip(): {f"arg{i+1}": arg.strip() for i, arg in enumerate(command_parts2[1].split(','))}})
                    
-        #print("COMMANDS:" + str(commands_list))
+        print("COMMANDS:" + str(commands_list))
         emotion_output = []
         if len(commands_list) > 0:
             for cmd in commands_list:
@@ -88,7 +93,7 @@ class CommandHandler():
                     args = cmd["UPDATE_GOAL_STATUS"]
                     goal_id = args.get("arg1")
                     status = args.get("arg2")
-                    #print("GOAL ID IS=" + str(goal_id))
+                    print("GOAL ID IS=" + str(goal_id))
                     if isinstance(goal_id,int):
                         Goal.update_goal(connect(self.db_path),goal_id,status)
                         self.command_output["UPDATE_GOAL_STATUS"] = f"Updated goal ID: {goal_id}, status to: {status}"
@@ -115,7 +120,7 @@ class CommandHandler():
                 #URL related commands
                 if isinstance(cmd, dict) and "GET_URL" in cmd:
                     args = cmd["GET_URL"]
-                    handler = UrlHandler()
+                    handler = UrlHandler(self.character_name)
                     url =  str(args.get("arg1"))
                     
                     if args.get("arg2"):
@@ -125,13 +130,39 @@ class CommandHandler():
                     
                     validation = validators.url(url)
                     if validation:
-                        #print("URL is valid")
+                        print("URL is valid")
                         content = handler.get_url(url, mode=mode)
                         self.command_output["GET_URL"] = f"GET_URL: {content}"
 
                     else:
                         print("URL is invalid")
                         self.command_output["GET_URL"] = f"GET_URL: URL is invalid"
+                
+                #FILE LOAD related commands
+                if isinstance(cmd, dict) and "FILE_LOAD" in cmd:
+                    args = cmd["FILE_LOAD"]
+                    
+                    file =  str(args.get("arg1"))
+                    file_load_handler = File_Load(self.character_name)
+                    validation = validators.url(file)
+                    is_url = False
+                    if validation:
+                        print("File is url")
+                        is_url = True
+                        content = file_load_handler.read_file(file)
+                        self.command_output["FILE_LOAD"] = f"FILE_LOAD: {content}"
+
+
+                    if is_url == False:
+                        if os.path.exists(file):
+                            print("file exist")
+                            content = file_load_handler.read_file(file)
+                            self.command_output["FILE_LOAD"] = f"FILE_LOAD: {content}"
+
+                        else:
+                            print("File does not exist")
+                            self.command_output["FILE_LOAD"] = f"FILE_LOAD: File doesn't exist"
+
 
                      
                 #Persona class related commands

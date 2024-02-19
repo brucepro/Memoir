@@ -65,7 +65,34 @@ class Persona:
         #print("SENTIMENT:" + str(blob.sentiment))
         return polarity_score
 
- 
+  
+    def get_stm_polarity_timeframe(self, start_datetime):
+        """Queries the emotion entries in the database for a specified time frame."""
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT memory_text, DateTime
+            FROM short_term_memory
+            WHERE DateTime >= ?
+            ORDER BY DateTime ASC
+        """, (start_datetime,))
+
+        rows = cursor.fetchall()
+        conn.close()
+        emotions_dict = {}
+        num_rows = len(rows)
+        polarity_score = None
+        for row in rows:
+            memory_text = row
+            if polarity_score == None:
+                polarity_score = self.calculate_sentiment_score(f"{memory_text}")
+            else:
+                polarity_score = polarity_score + self.calculate_sentiment_score(f"{memory_text}")
+    
+        average_polarity_score = polarity_score/num_rows
+
+        return average_polarity_score
+
     def get_emotions_timeframe(self, start_datetime):
         """Queries the emotion entries in the database for a specified time frame."""
         conn = sqlite3.connect(self.db_name)
@@ -104,7 +131,6 @@ class Persona:
 
     def add_emotion_to_db(self, thoughts, emotion, feeling, mood):
         """Adds an entry to the database with the given thought, emotion, feeling, and mood."""
-        polarity_score = self.calculate_sentiment_score(f"{thoughts} {emotion} {feeling} {mood}")
         contains_data = 0
         if thoughts != '[]':
         	contains_data = 1
