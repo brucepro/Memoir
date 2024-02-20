@@ -6,7 +6,6 @@ sentence_transformers
 langchain==0.1.6
 langchain-community==0.0.19
 unstructured
-python-magic-bin
 pypdf
 pypandoc
 rapidocr-onnxruntime
