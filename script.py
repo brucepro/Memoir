@@ -512,8 +512,10 @@ def delete_everything():
     if params['current_selected_character'] == None:
         print("No persona selected.")
     else:
+        character_name_lowercase = str(params['current_selected_character']).lower().strip()
         character_name = params['current_selected_character']
-        databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
+        
+        databasefile = os.path.join(databasepath, character_name_lowercase + "_sqlite.db")
         ltm = LTM(character_name, params['ltm_limit'], params['verbose'], address=params['qdrant_address'])
         ltm.delete_vector_db()
         utils.delete_file(databasefile)
