@@ -140,7 +140,7 @@ def bot_prefix_modifier(string, state):
         params['polarity_score'] = bot_current_polarity
         string = "[DateTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(bot_current_polarity) + "] " + string
     else:
-        string = "[DTime=" + str(date_str) + "] " + string
+        string = "[DateTime=" + str(date_str) + "] " + string
     #insert rag into prefix
     if params['botprefix_rag_enabled'] == "Enabled":
         if params['rag_active'] == True: 
