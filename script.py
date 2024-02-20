@@ -118,7 +118,7 @@ def bot_prefix_modifier(string, state):
     
 
     character_name = state["name2"].lower().strip()
-    params['current_persona'] = character_name
+    params['current_persona'] = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     persona = Persona(databasefile)
     current_time = datetime.now()
@@ -190,7 +190,7 @@ def input_modifier(string, state, is_chat=False):
         shared.processing_message = "Taking a moment to save Long Term Memories..."
     
     character_name = str(state["name2"].lower().strip())
-    params['current_persona'] = character_name
+    params['current_persona'] = state['name2'].strip()
     collection = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     stm = ShortTermMemory(databasefile)
@@ -276,7 +276,7 @@ def output_modifier(string, state, is_chat=False):
     
     
     character_name = state["name2"].lower().strip()
-    params['current_persona'] = character_name
+    params['current_persona'] = state['name2'].strip()
     collection = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     commands_output = None    
@@ -333,7 +333,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     '''
     if params['memory_active'] == True:
         character_name = state["name2"].lower().strip()
-        params['current_persona'] = character_name
+        params['current_persona'] = state['name2'].strip()
         databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
         dream = Dream(databasefile)
         persona = Persona(databasefile)
