@@ -132,7 +132,7 @@ def bot_prefix_modifier(string, state):
         params['polarity_score'] = average_polarity
         string = "[DateTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(average_polarity) + "] " + string
     else:
-        string = "[DTime=" + str(date_str) + "] " + string
+        string = "[DateTime=" + str(date_str) + "] " + string
     #insert memories into prefix.
     if params['botprefix_mems_enabled'] == "Enabled":
         if params['memory_active'] == True: 
