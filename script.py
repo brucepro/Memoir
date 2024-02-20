@@ -34,6 +34,7 @@ from extensions.Memoir.memory.long_term_memory import LTM
 from extensions.Memoir.rag.rag_data_memory import RAG_DATA_MEMORY
 from extensions.Memoir.memory.dream import Dream
 from extensions.Memoir.persona.persona import Persona
+from extensions.Memoir.commands.file_load import File_Load
 
 #globals
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -117,6 +118,7 @@ def bot_prefix_modifier(string, state):
     
 
     character_name = state["name2"].lower().strip()
+    params['current_persona'] = character_name
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     persona = Persona(databasefile)
     current_time = datetime.now()
@@ -126,7 +128,7 @@ def bot_prefix_modifier(string, state):
     past_time = current_time - timedelta(hours=n)
     past_time_str = past_time.strftime('%Y-%m-%d %H:%M:%S.%f')
     stm_polarity_data = persona.get_stm_polarity_timeframe(past_time_str)
-    #print(stm_polarity_data)
+    
     emotions_data = persona.get_emotions_timeframe(past_time_str)
     polarity_total = 0
     polarity_len = len(emotions_data)
@@ -188,6 +190,7 @@ def input_modifier(string, state, is_chat=False):
         shared.processing_message = "Taking a moment to save Long Term Memories..."
     
     character_name = str(state["name2"].lower().strip())
+    params['current_persona'] = character_name
     collection = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     stm = ShortTermMemory(databasefile)
@@ -273,6 +276,7 @@ def output_modifier(string, state, is_chat=False):
     
     
     character_name = state["name2"].lower().strip()
+    params['current_persona'] = character_name
     collection = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     commands_output = None    
@@ -522,6 +526,21 @@ def load_params_from_file_ui(arg):
     load_params_from_file(params_txt)
     pass
 
+def rag_upload_file(fileobj):
+    file_path = str(fileobj.name)
+    print("********FILEPATH*********")
+    print(file_path)
+    if params['current_persona'] != "":
+        file_load_handler = File_Load(params['current_persona'])
+                    
+        content = file_load_handler.read_file(file_path)
+        print("***********RAG FILE UPLOADED*************")
+        print(content)
+        print("**************************************")
+    else:
+        print("Current Persona is not selected, yet. Interact with your agent first. ")
+    pass
+
 def ui():
     """
     Gets executed when the UI is drawn. Custom gradio elements and
@@ -567,6 +586,10 @@ def ui():
                 - [GET_URL=url,output] - The output field will output the contents to the bot context. 
                 - Both commands output to the current context and save to the RAG system. Will work on setting a flag for this later. 
                 """))
+                
+
+                with gr.Row():
+                    rag_upload_box = gr.Interface(fn=rag_upload_file,inputs=["file",],outputs="text")
                 with gr.Row():
                     rag_limit = gr.Slider(
                         1, 100,
