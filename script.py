@@ -91,7 +91,7 @@ def state_modifier(state):
     add the stop string. Also when the bot speaks as the user it is annoying,
     so fix for that. 
     '''
-    state['custom_stopping_strings'] = '"[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
+    state['custom_stopping_strings'] = '"[AUGMENTED INFORMATION:","[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
     #params['state'] = state
     return state
 

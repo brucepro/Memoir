@@ -3,10 +3,11 @@ textblob
 validators
 qdrant_client
 sentence_transformers
+newspaper3k
 langchain==0.1.6
 langchain-community==0.0.19
 unstructured
+unstructured[pdf]
 pypdf
 pypandoc
 rapidocr-onnxruntime
-selenium
