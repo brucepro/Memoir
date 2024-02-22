@@ -25,7 +25,7 @@ class Ingest_File:
             processed = 1
             return data
         if pathlib.Path(self.file).suffix == ".txt":
-            loader = langchain_community.document_loaders.TextLoader(self.file)
+            loader = langchain_community.document_loaders.TextLoader(file_path=self.file,encoding='utf-8',autodetect_encoding=True)
             document = loader.load()
             processed = 1
             return document
