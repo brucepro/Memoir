@@ -574,7 +574,7 @@ def ui():
                     ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
                 with gr.Row():
                     ego_summary_limit = gr.Slider(
-                        0, 100,
+                        1, 100,
                         step=1,
                         value=params['ego_summary_limit'],
                         label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
@@ -587,6 +587,7 @@ def ui():
                 - Commands are [FILE_LOAD=filelocation - this can be on your filesystem or online. Also supports directory loading but that uses the unstructured text loader so isn't as nice as using the specific loaders like .pdf, .epub etc.]
                 - [GET_URL=url,output] - The output field will output the contents to the bot context. 
                 - Both commands output to the current context and save to the RAG system. Will work on setting a flag for this later. 
+                - The file box below will load the file directly to the RAG vector database (It will not load it to context, will add a checkbox for that feature soon.)
                 """))
                 
 
