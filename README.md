@@ -1,5 +1,7 @@
 # Memoir+: Enhanced Persona Extension for Text Generation Web UI
 
+Important: I recommend you go to the qdrant dashboard: http://localhost:6333/dashboard and create and download a snapshot of your agents vector store. This will allow you to restore in case something happens where the docker zaps it. Next release has a few features to fix this, but good to have the backup.
+
 ## Introduction
 
 Memoir is an AI-powered plugin designed to enrich your existing AI companions within the Text Generation Web UI. With advanced memory capabilities and emotional intelligence, Memoir transforms your interactions with AI into a more nuanced and human-like experience.
