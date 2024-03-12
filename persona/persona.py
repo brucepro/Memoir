@@ -88,8 +88,10 @@ class Persona:
                 polarity_score = self.calculate_sentiment_score(f"{memory_text}")
             else:
                 polarity_score = polarity_score + self.calculate_sentiment_score(f"{memory_text}")
-    
-        average_polarity_score = polarity_score/num_rows
+	if num_rows > 0:    
+        	average_polarity_score = polarity_score/num_rows
+	else:
+		average_polarity_score
 
         return average_polarity_score
 
