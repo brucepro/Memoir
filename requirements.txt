@@ -11,3 +11,4 @@ unstructured[pdf]
 pypdf
 pypandoc
 rapidocr-onnxruntime
+beautifulsoup4
