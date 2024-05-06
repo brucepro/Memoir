@@ -3,3 +3,4 @@ textblob
 validators
 qdrant_client
 sentence_transformers
+beautifulsoup4
