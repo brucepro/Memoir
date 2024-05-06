@@ -1,4 +1,4 @@
-python_on_whales
+python-on-whales
 textblob
 validators
 qdrant_client
