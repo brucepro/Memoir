@@ -1,7 +1,13 @@
-'''
-using all the langchain loaders since I am lazy. 
+"""
+ingest_file_class.py - implementation of the langchain loaders to parse the files and chunk them. 
 
-'''
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
+ 
+"""
+
 import os
 import re
 import unicodedata

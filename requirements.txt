@@ -12,3 +12,4 @@ pypdf
 pypandoc
 rapidocr-onnxruntime
 beautifulsoup4
+selenium

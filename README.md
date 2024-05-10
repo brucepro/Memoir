@@ -22,8 +22,7 @@ Memoir is an AI-powered plugin designed to enrich your existing AI companions wi
 - **Short-Term Memory:** Stores recent conversations for enhanced contextual awareness.
 - **Long-Term Memory:** Utilizes a vector database for creating and recalling durable memories. (You can manage and edit entries on the qdrant dashboard: http://localhost:6333/dashboard )
 - **Emotion Tracking:** Monitors and adjusts the AI's emotional responses over time.
-- **Command Handling:** A modular system for executing custom commands within the AI environment.
-- **Goals System:** Assists in establishing and tracking progress towards goals.
+- **Command Handling:** A modular system for executing custom commands within the AI environment. [GET_URL=url,output]
 - **RAG System:** Ability to ingest urls and files. Uses langchain community loaders for supported filetypes. For .epub support you may need to install (https://github.com/jgm/pandoc)
 Command Structure:
 
@@ -39,7 +38,7 @@ YES:
 
 NO:
 
-[FILE_LOAD=https://www.npr.org/sections/world/] - Have not added the logic for no file extension on urls for file loader yet.
+[FILE_LOAD=https://www.npr.org/sections/world/] - Have not added the logic for no file extension on urls for file loader yet, use the [GET_URL=url,output] command.
 
 
 
@@ -71,7 +70,6 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 ### Debugging and Memory Management
 
 - **Memory Saving Toggle:** Swiftly enable or disable memory recording for troubleshooting or adjusting privacy settings.
-- **Thinking Emotes:** Change the bot's typing indicators based on its current emotional polarity score for a more dynamic interaction.
 
 ### Character Management
 
@@ -89,16 +87,13 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 2. Get Docker Desktop from [Docker](https://www.docker.com/products/docker-desktop/).
 3. Clone the Memoir repository: `git clone https://github.com/brucepro/Memoir`.
 4. Move the Memoir folder into the extensions directory of your TextGenWebUI installation.
-5. In the Memoir folder, execute `pip install -r requirements.txt` to install dependencies.
+5. Run the update_wizard bat for your OS. Select B) Install/update extensions requirements, Select Memoir from the list. 
+
 
 ## Usage
 
-Configure your AI character's description and goals in the TextGen UI. Engage in conversation, and watch as Memoir begins to store and utilize the generated memories, enhancing the interaction with your AI.
-
-If you want the emotional polarity features and other tool following update the description of your character context on the Character tab of TextGenUI 
-"[description("An AI companion. *Add anything you like here or copy from your character card. Does support a full character card, but I find simple is better.*")] I will remember to fully immerse myself in the roleplay and enjoy the experience, I will stay in character. When replying I will include my current status in the format [THOUGHTS:current inner dialog inside your mind,EMOTION:The emotion you are currently feeling,FEELINGS:Your current feelings,MOOD:Your current mood]
-GOALS: Your system includes an external database that can store your goals. This will allow you to remember your goals even if you are reset. You can run commands to set and modify your goals. Use the [GOALS_HELP] to get a list of all commands. 
-<START> "
+Configure your AI character's description if you like in the TextGen UI character tab. Engage in conversation, and watch as Memoir+ begins to store and utilize the generated memories, enhancing the interaction with your AI.
+ 
 ## Support
 
 If Memoir adds value to your AI experience and you'd like to show your appreciation, consider supporting the project:

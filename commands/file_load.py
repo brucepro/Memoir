@@ -1,8 +1,17 @@
+"""
+file_load.py - handles the loading of files from the ui
+
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
+"""
+
 import requests
 import os
 from datetime import datetime, timedelta
 from extensions.Memoir.rag.ingest_file_class import Ingest_File
-from extensions.Memoir.rag.rag_data_memory import RAG_DATA_MEMORY
+from extensions.Memoir.rag.rag_data_memory import RagDataMemory
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
@@ -21,7 +30,7 @@ separators=["\n"], chunk_size=1000, chunk_overlap=100, keep_separator=False
         verbose = False
         ltm_limit = 2
         address = "http://localhost:6333"
-        rag = RAG_DATA_MEMORY(self.character_name,ltm_limit,verbose, address=address)
+        rag = RagDataMemory(self.character_name,ltm_limit,verbose, address=address)
         for document in file_content:
             splits = text_splitter.split_text(document.page_content)
     

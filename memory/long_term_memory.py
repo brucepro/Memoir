@@ -1,6 +1,14 @@
-'''
-Memoir+ long term memory system.
-'''
+"""
+long_term_memory.py - main qdrant class for storage of ltm
+
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
+
+additional info here https://python-client.qdrant.tech/
+
+"""
 
 import random
 from datetime import datetime
@@ -79,7 +87,7 @@ class LTM():
             print(operation_info)
 
     def get_embedding_vector(self, doc):
-        data = doc['comment'] + doc['emotions'] + doc['people']
+        data = doc['comment'] + doc['people']
         self.vector = self.encoder.encode(data).tolist()
         self.next_id = random.randint(0, 1e10)
         points = [

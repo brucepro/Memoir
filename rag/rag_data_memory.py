@@ -1,6 +1,12 @@
-'''
-Memoir+ rag data saving
-'''
+"""
+rag_data_memory.py - main class that implements that vector store for the RAG system
+
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
+ 
+"""
 
 import random
 from datetime import datetime
@@ -9,7 +15,7 @@ from qdrant_client.http.models import PointStruct
 from html import escape
 from sentence_transformers import SentenceTransformer
 
-class RAG_DATA_MEMORY():
+class RagDataMemory():
     def __init__(self,
                  collection,
                  ltm_limit,
