@@ -1,13 +1,11 @@
 """
-long_term_memory.py - main qdrant class for storage of ltm
+rag_data_memory.py - main class that implements that vector store for the RAG system
 
 Memoir+ a persona extension for Text Gen Web UI. 
 MIT License
 
 Copyright (c) 2024 brucepro
-
-additional info here https://python-client.qdrant.tech/
-
+ 
 """
 
 import random
@@ -17,7 +15,7 @@ from qdrant_client.http.models import PointStruct
 from html import escape
 from sentence_transformers import SentenceTransformer
 
-class LTM():
+class RagDataMemory():
     def __init__(self,
                  collection,
                  ltm_limit,
@@ -30,9 +28,9 @@ class LTM():
         self.verbose = verbose
         if self.verbose:
             print("initiating verbose debug mode.............")
-        self.collection = collection
+        self.collection = collection + "_rag_data"
         self.ltm_limit = ltm_limit
-        #print("LTM LIMIT:" + str(ltm_limit))
+        print("RAG LIMIT:" + str(ltm_limit))
         self.address = address
         self.port = port
         if self.verbose:
@@ -87,7 +85,7 @@ class LTM():
             print(operation_info)
 
     def get_embedding_vector(self, doc):
-        data = doc['comment'] + doc['people']
+        data = doc['comment']
         self.vector = self.encoder.encode(data).tolist()
         self.next_id = random.randint(0, 1e10)
         points = [

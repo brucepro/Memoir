@@ -1,5 +1,10 @@
 """
-Short Term Memory
+short_term_memory.py - utils for saving stms
+
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
 """
 import sqlite3
 import os
@@ -16,31 +21,6 @@ class ShortTermMemory:
         if not os.path.exists(self.db_name):
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
-
-            # Create Emotions table
-            cursor.execute('''CREATE TABLE "Emotions" (
-                                "ID" INTEGER,
-                                "Thoughts" TEXT,
-                                "Emotions" TEXT,
-                                "Feelings" TEXT,
-                                "Mood" TEXT,
-                                "DateTime" DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                PRIMARY KEY("ID" AUTOINCREMENT)
-                            )''')
-
-            # Create Goals table
-            cursor.execute('''CREATE TABLE "goals" (
-                                "id" INTEGER NOT NULL UNIQUE,
-                                "title" TEXT NOT NULL,
-                                "description" TEXT NOT NULL,
-                                "importance_rating" INTEGER,
-                                "deadline" NUMERIC,
-                                "status" INTEGER,
-                                "parent_id" INTEGER,
-                                "reason" TEXT NOT NULL,
-                                "success_criteria" TEXT NOT NULL,
-                                PRIMARY KEY("id" AUTOINCREMENT)
-                            )''')
 
             # Create ShortTermMemory table
             cursor.execute('''CREATE TABLE "short_term_memory" (

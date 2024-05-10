@@ -1,32 +1,55 @@
-import requests
-from bs4 import BeautifulSoup
+"""
+urlhandler.py - uses langchain to import the entire url into context and rag
 
-class UrlHandler:
-    def __init__(self):
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
+"""
+import requests
+import langchain
+from datetime import datetime, timedelta
+from extensions.Memoir.rag.rag_data_memory import RagDataMemory
+from langchain_community.document_loaders import SeleniumURLLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+class UrlHandler():
+    def __init__(self, character_name):
+        self.character_name = character_name
         pass
 
-    def get_url(self, url, mode='input', tags=['title','h1','h2','h3','h4','h5','h6','p','table','ul','ol']):
-        """
-        This function fetches the content of a given URL and returns it in either input or output format.
-
-        Args:
-            url (str): The URL to fetch the content from.
-            mode (str): Specifies whether the returned content should be added as an input ('input') or output ('output'). Defaults to 'input'.
-            tags (list): A list of HTML tags to extract the text from. Defaults to ['h1', 'p'].
-
-        Returns:
-            str: The text content of the specified tags from the specified URL in either input or output format, depending on the value of `mode`.
-
-        Side Effects:
-            None.
-        """
-        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.content, "html.parser")
-        text = ""
-        for tag in tags:
-            text += "\n".join([element.get_text() for element in soup.find_all(tag)]) + "\n"
+    def get_url(self, url, mode='output'):
+        urls = [url]
+        loader = SeleniumURLLoader(urls=urls)
+        
+        data = loader.load()
+        print("##############")
+        print(data)
+        print("##############")
+        
+        #save to rag memory
+        text_splitter = RecursiveCharacterTextSplitter(
+    separators=["\n"], chunk_size=1000, chunk_overlap=50, keep_separator=False
+)
+        verbose = False
+        ltm_limit = 2
+        address = "http://localhost:6333"
+        rag = RagDataMemory(self.character_name,ltm_limit,verbose, address=address)
+        for document in data:
+            splits = text_splitter.split_text(document.page_content)
+        
+            for text in splits:
+                 #print("----")
+                 #print(text)
+                 #print("----")
+                 now = datetime.utcnow()
+                 data_to_insert = str(text) + " reference:" + str(url)
+                 doc_to_insert = {'comment': str(data_to_insert),'datetime': now}
+                 rag.store(doc_to_insert)
+            
         if mode == 'input':
-            return text
+            return data
         elif mode == 'output':
-            return f"[URL_CONTENT={url}]\n{text}"
+            print("outputing" + str(data))
+            thedata = str(data)
+            return f"[URL_CONTENT={url}]\n{thedata}"
