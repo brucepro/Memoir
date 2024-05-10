@@ -1,6 +1,11 @@
-'''
-dream.py
-'''
+"""
+dream.py - main class that handles the retrieval of memories for ltm
+
+Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
+
+Copyright (c) 2024 brucepro
+"""
 import sqlite3
 import os
 from modules.text_generation import (

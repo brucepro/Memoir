@@ -2,7 +2,9 @@
 script.py - main entrance of the script into the Text Generation Web UI system extensions
 
 Memoir+ a persona extension for Text Gen Web UI. 
+MIT License
 
+Copyright (c) 2024 brucepro
 """
 
 import os
@@ -19,17 +21,21 @@ from modules.text_generation import (
 )
 import pathlib
 import sqlite3
+import subprocess
+import itertools
+import time
 import json
 from python_on_whales import DockerClient
 
 
-from extensions.Memoir.goals.goal import Goal
 from extensions.Memoir.commandhandler import CommandHandler
 from extensions.Memoir.chathelper import ChatHelper
 from extensions.Memoir.memory.short_term_memory import ShortTermMemory
 from extensions.Memoir.memory.long_term_memory import LTM
+from extensions.Memoir.rag.rag_data_memory import RagDataMemory
 from extensions.Memoir.memory.dream import Dream
 from extensions.Memoir.persona.persona import Persona
+from extensions.Memoir.commands.file_load import File_Load
 
 #globals
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -60,6 +66,41 @@ params_txt = os.path.join(current_dir, "memoir_config.json")
 params = load_params_from_file(params_txt)
 
 
+def memory_insert():
+    """
+    Handles the insertion of the memories into the chat. 
+    """
+    memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
+    params['bot_long_term_memories'] = ""
+    params['user_long_term_memories'] = ""
+    unique_memories = []
+    for memory in memory_text:
+        if memory not in unique_memories:
+            unique_memories.append(memory)
+    if params['verbose'] == True:
+        print("--------------Memories---------------------------")
+        print(unique_memories)
+        print("---------------End Memories--------------------------")
+                
+        print("Len mem:" + str(len(unique_memories)))
+    if len(unique_memories) > 0:
+        return "[You remember:" + str(unique_memories) + " ] "
+    else:
+        return ""  
+    
+def rag_insert():
+    """
+    Handles the insertion of the RAG items into the chat.
+    """
+    rag_text = list(params['bot_rag_data']) + list(params['user_rag_data'])
+    unique_rags = []
+    for rag in rag_text:
+        if rag not in unique_rags:
+            unique_rags.append(rag)
+    if len(unique_rags) > 0:
+        return "[Augumented Information:" + str(unique_rags) + " ] "
+    else:
+        return ""
 
 def state_modifier(state):
     """
@@ -78,7 +119,6 @@ def state_modifier(state):
     state['memory_active'] = params['memory_active']
     state['qdrant_address'] = params['qdrant_address']
     state['polarity_score'] = params['polarity_score']
-    state['use_thinking_emotes'] = params['use_thinking_emotes']
     state['current_selected_character'] = params['current_selected_character']
     '''
     Since we are adding to the bot prefix, they tend to get hung up on 
@@ -86,7 +126,7 @@ def state_modifier(state):
     add the stop string. Also when the bot speaks as the user it is annoying,
     so fix for that. 
     '''
-    state['custom_stopping_strings'] = '"[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
+    state['custom_stopping_strings'] = '"[AUGMENTED INFORMATION:","[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
     #params['state'] = state
     return state
 
@@ -97,22 +137,9 @@ def bot_prefix_modifier(string, state):
     By default, the prefix will be something like "Bot Name:".
     """
     
-    if params['use_thinking_emotes'] == True:
-        if params['polarity_score'] < -0.699999999999999:
-            shared.processing_message = random.choice(list(params['thinking_emotes_negative_polarity']))
-        elif params['polarity_score'] >= -0.700000000000000 and params['polarity_score'] < 0:
-            shared.processing_message = random.choice(list(params['thinking_emotes_slightly_negative_polarity']))
-        elif params['polarity_score'] >= 0 and params['polarity_score'] < 0.48900000000:
-            shared.processing_message = random.choice(list(params['thinking_emotes_neutral_polarity']))
-        elif params['polarity_score'] >= 0.4999999999999999 and params['polarity_score'] < 0.75:
-            shared.processing_message = random.choice(list(params['thinking_emotes_slightly_positive_polarity']))
-        elif params['polarity_score'] >= 0.75 and params['polarity_score'] <= 1:
-            shared.processing_message = random.choice(list(params['thinking_emotes_positive_polarity']))
-        if params['dream_mode'] == 1:
-            shared.processing_message = "Taking a moment to save Long Term Memories..."
-    
 
     character_name = state["name2"].lower().strip()
+    params['current_persona'] = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     persona = Persona(databasefile)
     current_time = datetime.now()
@@ -121,40 +148,20 @@ def bot_prefix_modifier(string, state):
     n = 24
     past_time = current_time - timedelta(hours=n)
     past_time_str = past_time.strftime('%Y-%m-%d %H:%M:%S.%f')
-    emotions_data = persona.get_emotions_timeframe(past_time_str)
-    polarity_total = 0
-    polarity_len = len(emotions_data)
-    for data in emotions_data:
-        polarity_total = polarity_total + data['average_polarity']
-    if polarity_len != 0:
-        average_polarity = round((polarity_total/polarity_len), 4)
-        bot_current_polarity = average_polarity
-        params['polarity_score'] = average_polarity
-        string = "[DateTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(average_polarity) + "] " + string
-    else:
-        string = "[DateTime=" + str(date_str) + "] " + string
+    stm_polarity_data = persona.get_stm_polarity_timeframe(past_time_str)
+    bot_current_polarity = round((stm_polarity_data), 4)
+    params['polarity_score'] = bot_current_polarity
+    string = "[DateTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(bot_current_polarity) + "] " + string
+    #insert rag into prefix
+    if params['botprefix_rag_enabled'] == "Enabled":
+        if params['rag_active'] == True: 
+            string = str(rag_insert()) + string
+
     #insert memories into prefix.
     if params['botprefix_mems_enabled'] == "Enabled":
         if params['memory_active'] == True: 
-            memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
-
-            
-            params['bot_long_term_memories'] = ""
-            params['user_long_term_memories'] = ""
-            unique_memories = []
-            for memory in memory_text:
-                if memory not in unique_memories:
-                    unique_memories.append(memory)
-            if params['verbose'] == True:
-                print("--------------Memories---------------------------")
-                print(unique_memories)
-                print("---------------End Memories--------------------------")
-                
-                print("Len mem:" + str(len(unique_memories)))
-            if len(unique_memories) > 0:
-                if params['memory_active'] == True:
-                    string = "[You remember:" + str(unique_memories) + " ] " + string  
-    #print(string)    
+            string = str(memory_insert()) + string
+            #print(string)    
     return string
 
 
@@ -168,17 +175,17 @@ def input_modifier(string, state, is_chat=False):
     """
     #vars
     #we need to pass state to some of our buttons. Need to think of a better way.
-    if params['dream_mode'] == 1:
-            shared.processing_message = "Taking a moment to save Long Term Memories..."
     
     character_name = str(state["name2"].lower().strip())
+    params['current_persona'] = state['name2'].strip()
+    collection = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     stm = ShortTermMemory(databasefile)
     
     commands_output = None    
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
-        handler = CommandHandler(databasefile)
+        handler = CommandHandler(databasefile,collection)
         commands_output = handler.process_command(string)
         if params['verbose'] == True:
             print("---------COMMANDS OUTPUT----------------")
@@ -203,39 +210,26 @@ def input_modifier(string, state, is_chat=False):
         username = state['name1'].strip()
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
+        rag_limit = params['rag_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, ltm_limit, verbose, address=address)
         params['user_long_term_memories'] = ltm.recall(string)
-        #print("Commands output")
-        #print(commands_output)
-        #print("Len commands output")
-        #print(len(commands_output))
+        rag = RagDataMemory(collection,rag_limit,verbose, address=address)
+        params['user_rag_data'] = rag.recall(string)
+        
         if len(commands_output) > 0:
-            #print("Adding Commands")
-            #print(str(commands_output))
             string = string + " [" + str(commands_output) + "]"    
-    #print("STRING:" + str(string))
-    #insert memories into prefix.
-    if params['botprefix_mems_enabled'] == "Disabled":
-        if params['memory_active'] == True: 
-            memory_text = list(params['bot_long_term_memories']) + list(params['user_long_term_memories'])
-
-            
-            params['bot_long_term_memories'] = ""
-            params['user_long_term_memories'] = ""
-            unique_memories = []
-            for memory in memory_text:
-                if memory not in unique_memories:
-                    unique_memories.append(memory)
-            if params['verbose'] == True:
-                print("--------------Memories---------------------------")
-                print(unique_memories)
-                print("---------------End Memories--------------------------")
-                
-                print("Len mem:" + str(len(unique_memories)))
-            if len(unique_memories) > 0:
-                string = "[You remember:" + str(unique_memories) + " ] " + string   
-    #print(string)
+        #insert rag into prefix
+        if params['botprefix_rag_enabled'] == "Disabled":
+            if params['rag_active'] == True: 
+                string = str(rag_insert()) + string
+        #insert memories into prefix.
+        if params['botprefix_mems_enabled'] == "Disabled":
+            if params['memory_active'] == True: 
+                string = str(memory_insert()) + string   
+        print("--------current context string input modifier---------------")
+        print(string)
+        print("--------/end context string input modifier---------------")
     return string
 
 
@@ -249,12 +243,14 @@ def output_modifier(string, state, is_chat=False):
     
     
     character_name = state["name2"].lower().strip()
+    params['current_persona'] = state['name2'].strip()
+    collection = state['name2'].strip()
     databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
     commands_output = None    
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
         #handle [command]'s from the bot
-        handler = CommandHandler(databasefile)
+        handler = CommandHandler(databasefile,collection)
         commands_output = handler.process_command(string)
     
         #STM Save of user input.
@@ -276,10 +272,12 @@ def output_modifier(string, state, is_chat=False):
         username = state['name1'].strip()
         verbose = params['verbose']
         ltm_limit = params['ltm_limit']
+        rag_limit = params['rag_limit']
         address = params['qdrant_address']
         ltm = LTM(collection, ltm_limit, verbose,  address=address)
         params['bot_long_term_memories'] = ltm.recall(string)
-        
+        rag = RagDataMemory(collection,rag_limit,verbose, address=address)
+        params['bot_rag_data'] = rag.recall(string)
     if params['dream_mode'] == 0:
         #add the output of commands
         if len(commands_output) > 0:
@@ -302,7 +300,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     '''
     if params['memory_active'] == True:
         character_name = state["name2"].lower().strip()
-        params['current_persona'] = character_name
+        params['current_persona'] = state['name2'].strip()
         databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
         dream = Dream(databasefile)
         persona = Persona(databasefile)
@@ -324,8 +322,6 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             print("--------------------------------------Enough memories for a dream...")
             
             params['dream_mode'] = 1
-            if params['use_thinking_emotes'] == True:
-                shared.processing_message = "Taking a moment to save long-term memories..."
             
             bot_dream_persona = "You are " + str(params['ego_persona_name']) + ": " + str(params['ego_persona_details'])
             
@@ -349,7 +345,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 else:
                     memory_text.append(f"{row[5]}: {row[1]}")
                 people.append(row[3])
-                emotions.append(persona.get_emotions_from_string(row[1]))
+                
 
             unique_memories = []
             for memory in memory_text:
@@ -362,10 +358,6 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             for names in people:
                 if names not in unique_people:
                     unique_people.append(names)
-            unique_emotions = []
-            for emotion in emotions:
-                if emotion not in unique_emotions:
-                    unique_emotions.append(emotion)
 
             input_to_summarize = input_to_summarize + "(A conversation between " + str(unique_people) + " )"
             
@@ -379,6 +371,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             
             for response in generate_reply(question, state, stopping_strings='"<END>","</END>"', is_chat=False, escape_html=False, for_ui=False):
                 response_text.append(response) 
+            #time.sleep(1)
             if len(str(response_text[-1])) > 100:
                 dream_check = 1
                 print("Summary passed checking")
@@ -397,7 +390,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 now = datetime.utcnow()
                 tosave = str(response_text[-1])
                 botname = state['name2'].strip()
-                doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'emotions': str(unique_emotions), 'people': str(unique_people)}
+                doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'people': str(unique_people)}
                 if params['verbose'] == True:
                     print("Saving to Qdrant" + str(doc_to_upsert))
                 ltm.store(doc_to_upsert)
@@ -436,34 +429,32 @@ def custom_js():
 def setup():
     """
     Gets executed only once, when the extension is imported.
+
+    If for some reason you can't run docker, the system will work by installing the qdrant binaries 
+    https://github.com/qdrant/qdrant/releases
+    As long as the server and port match in the memoir_config.json you should be good. Then comment out the docker stuff below or remove this entire function.
     """
-    #ubuntudockerfile = os.path.join(current_dir, "ubuntu-docker-compose.yml")
     qdrantdockerfile = os.path.join(current_dir, "qdrant-docker-compose.yml")
         
     # run the service
-    '''
-    try:
-        docker_ubuntu_container = DockerClient(compose_files=[ubuntudockerfile])
-        docker_ubuntu_container.compose.up(detach=True)
-            
-        print(f"Running the ubuntu docker service...you can modify this in the ubuntu-docker-compose.yml: {ubuntudockerfile}")
-    except Exception as e:
-        print(f": Error {ubuntudockerfile}: {e}")
-    '''
+    
     try:
         docker_qdrant = DockerClient(compose_files=[qdrantdockerfile])
         docker_qdrant.compose.up(detach=True)
             
-        print(f"Running the docker service...you can modify this in the docker-compose.yml: {qdrantdockerfile}")
+        print(f"Running the docker service...you can modify this in the docker-compose.yml: {qdrantdockerfile} . If you get an error here it is most likely that you forgot to load docker. I recommend docker desktop.")
     except Exception as e:
         print(f": Error {qdrantdockerfile}: {e}")
-
-    pass
 
 
 def update_dreammode():
     print("-----Params-----")
     print(str(params))
+    pass
+
+def deep_dream():
+    params['deep_dream'] = 1
+
     pass
 
 
@@ -477,8 +468,10 @@ def delete_everything():
     if params['current_selected_character'] == None:
         print("No persona selected.")
     else:
+        character_name_lowercase = str(params['current_selected_character']).lower().strip()
         character_name = params['current_selected_character']
-        databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
+        
+        databasefile = os.path.join(databasepath, character_name_lowercase + "_sqlite.db")
         ltm = LTM(character_name, params['ltm_limit'], params['verbose'], address=params['qdrant_address'])
         ltm.delete_vector_db()
         utils.delete_file(databasefile)
@@ -490,6 +483,25 @@ def load_params_from_file_ui(arg):
     print(arg)
     load_params_from_file(params_txt)
     pass
+
+def rag_upload_file(file):
+    
+    #text = file.decode('utf-8')
+    print(file)
+    file_path = str(file.name)
+    print("********FILEPATH*********")
+    print(file_path)
+    if params['current_persona'] != "":
+        file_load_handler = File_Load(params['current_persona'])
+                    
+        content = file_load_handler.read_file(file_path)
+        print("***********RAG FILE UPLOADED*************")
+        print(content)
+        print("**************************************")
+    else:
+        print("Current Persona is not selected, yet. Interact with your agent first. ")
+    return 'File inserted into the RAG vector Store.'
+
 
 def ui():
     """
@@ -522,12 +534,45 @@ def ui():
                     ltm_limit.change(lambda x: params.update({'ltm_limit': x}), ltm_limit, None)
                 with gr.Row():
                     ego_summary_limit = gr.Slider(
-                        0, 100,
+                        1, 100,
                         step=1,
                         value=params['ego_summary_limit'],
                         label='Number of Short Term Memories to use for Ego Summary to LTM. How long it waits to process STM to turn them into LTM. If you use too big of a number here when processing LTM it may take some time.',
                         )
                     ego_summary_limit.change(lambda x: params.update({'ego_summary_limit': x}), ego_summary_limit, None)
+            with gr.Accordion("RAG Settings"):    
+                with gr.Row():
+                    gr.Markdown(textwrap.dedent("""
+                - The RAG system uses the langchain loaders. It saves to a unique collection in the qdrant database called botname_rag_data
+                - Commands are [FILE_LOAD=filelocation - this can be on your filesystem or online. Also supports directory loading but that uses the unstructured text loader so isn't as nice as using the specific loaders like .pdf, .epub etc.]
+                - [GET_URL=url,output] - The output field will output the contents to the bot context. 
+                - Both commands output to the current context and save to the RAG system. Will work on setting a flag for this later. 
+                - The file box below will load the file directly to the RAG vector database (It will not load it to context, will add a checkbox for that feature soon.)
+                """))
+                
+
+                with gr.Row():
+                    last_updated = gr.Markdown()
+                    file_input = gr.File(label='Input file')
+                    update_file = gr.Button('Load data')
+                    update_file.click(rag_upload_file, [file_input], last_updated, show_progress=True)
+                with gr.Row():
+                    rag_limit = gr.Slider(
+                        1, 100,
+                        step=1,
+                        value=params["rag_limit"],
+                        label='RAG Result Count (How many items to return from the RAG into context. Does this number for both bot reply and user reply. So at 5, it recovers 10 rag items.)',
+                        )
+                    rag_limit.change(lambda x: params.update({'rag_limit': x}), rag_limit, None)
+                with gr.Row():
+                    rags_in_bot_prefix = gr.Radio(
+                            choices={"Enabled": "true", "Disabled": "false"},
+                            label="RAG in Bot Prefix (Saves context)",
+                            value=params['botprefix_rag_enabled'],
+                        )
+                    rags_in_bot_prefix.change(lambda x: params.update({'botprefix_rag_enabled': x}), rags_in_bot_prefix, None)
+                    rag_active = gr.Checkbox(value=params['rag_active'], label='Uncheck to disable the rag system.')
+                    rag_active.change(lambda x: params.update({'rag_active': x}), rag_active, None)
             with gr.Accordion("Debug"):    
                 with gr.Row():
                     cstartdreammode = gr.Button("List Params in debug window")
@@ -555,9 +600,6 @@ def ui():
                     activate_roleplay.change(lambda x: params.update({'is_roleplay': x}), activate_roleplay, None)
                     activate_memory = gr.Checkbox(value=params['memory_active'], label='Uncheck to disable the saving of memorys.')
                     activate_memory.change(lambda x: params.update({'memory_active': x}), activate_memory, None)
-                with gr.Row():
-                    use_thinking_emotes_ckbox = gr.Checkbox(value=params['use_thinking_emotes'], label='Uncheck to disable the thinking emotes.')
-                    use_thinking_emotes_ckbox.change(lambda x: params.update({'use_thinking_emotes': x}), use_thinking_emotes_ckbox, None)
                 with gr.Row():
                     available_characters = utils.get_available_characters()
                     character_list = gr.Dropdown(

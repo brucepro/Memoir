@@ -1,0 +1,7 @@
+Refactoring code, tested on latest TextGenUI with update_wizard completed. 
+
+removed thinking emotes - doesn't add enough functionally and could break immersion. 
+removed goals - will be replaced with a task sub-system and knowlege graphs
+removed emotion data table - This has been replaced by taking the sentiment of the last 24 hours of conversation. The bot is usually smart enough to understand the polarity score in the prefix. 
+Updated ego thinking statement to add in q/a pairs
+removed the linux docker - will implement this in the agent subsystem later.
