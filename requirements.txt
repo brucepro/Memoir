@@ -13,3 +13,7 @@ pypandoc
 rapidocr-onnxruntime
 beautifulsoup4
 selenium
+webdriver_manager
+pillow>=10.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
+transformers>=4.36.0 # not directly required, pinned by Snyk to avoid a vulnerability
+torch>=2.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
