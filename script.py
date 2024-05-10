@@ -156,6 +156,7 @@ def bot_prefix_modifier(string, state):
     if params['botprefix_rag_enabled'] == "Enabled":
         if params['rag_active'] == True: 
             string = str(rag_insert()) + string
+
     #insert memories into prefix.
     if params['botprefix_mems_enabled'] == "Enabled":
         if params['memory_active'] == True: 
