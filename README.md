@@ -89,7 +89,9 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 2. Get Docker Desktop from [Docker](https://www.docker.com/products/docker-desktop/). (If for some reason you cannot load docker, you can bypass it by installing qdrant binary (https://github.com/qdrant/qdrant/releases) You can then comment out the docker loads in startup of script.py)
 3. Clone the Memoir repository: `git clone https://github.com/brucepro/Memoir`.
 4. Move the Memoir folder into the extensions directory of your TextGenWebUI installation.
-5. Run the update_wizard bat for your OS. Select B) Install/update extensions requirements, Select Memoir from the list. 
+5. Run the update_wizard bat for your OS. Select B) Install/update extensions requirements, Select Memoir from the list (or if you are familiar with terminal/CMD - from TextGenWebUI/extensions/Memoir folder, run `pip install -r requirements.txt --upgrade`).
+6. Restart Text Generation Web UI, goes to 'Session' tab - checked on Memoir, then 'Apply flags/extensions and restart'.
+7. Make sure Memoir extension load successfully from Text Generation Web UI console.
 
 
 ## Usage
