@@ -360,8 +360,13 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                     unique_people.append(names)
 
             input_to_summarize = input_to_summarize + "(A conversation between " + str(unique_people) + " )"
+            stm_context = ltm.get_last_summaries(1)
+            if len(stm_context) > 0:
+                stm_context_string = "[Past Summary Context from last 1 hour:{'" + str(stm_context) + "'} These past summaries will help you better understand the current context.]"
+            else:
+                stm_context_string = "" 
             
-            question = bot_dream_persona + "[MEMORIES:{'" + input_to_summarize + "'}] " + roleplay_message + thinking_statement
+            question = bot_dream_persona + stm_context_string + "[MEMORIES:{'" + input_to_summarize + "'}] " + roleplay_message + thinking_statement
             
             if params['verbose'] == True:
                 print('-----------memory question-----------')
@@ -388,7 +393,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 print("----------END Memory Summary to save-------------")
             if dream_check == 1:
                 now = datetime.utcnow()
-                tosave = str(response_text[-1])
+                tosave = str(response_text[-1]) + " " + str(roleplay_message)
                 botname = state['name2'].strip()
                 doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'people': str(unique_people)}
                 if params['verbose'] == True:

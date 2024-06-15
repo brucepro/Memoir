@@ -11,7 +11,7 @@ additional info here https://python-client.qdrant.tech/
 """
 
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from qdrant_client import models, QdrantClient
 from qdrant_client.http.models import PointStruct
 from html import escape
@@ -130,6 +130,32 @@ class LTM():
                     print("Not adding " + comment)
             result_count += 1
         return formated_results
+
+    
+    def get_last_summaries(self,range):
+        # Retrieve all vectors
+        query_vector = self.encoder.encode("").tolist()
+        all_vectors = self.qdrant.search(collection_name=self.collection, query_vector=query_vector,limit=99999999999 + 1)
+        formated_results = []
+        seen_comments = set()
+        result_count = 0
+        for result in all_vectors:
+            comment = result.payload['comment']
+            if comment not in seen_comments:
+                seen_comments.add(comment)
+                datetime_obj = datetime.strptime(result.payload['datetime'], "%Y-%m-%dT%H:%M:%S.%f")
+                date_str = datetime_obj.strftime("%Y-%m-%d")
+                now = datetime.now()
+                if now - datetime_obj <= timedelta(hours=range):
+                    if self.verbose:
+                        print("Adding memory to stm_context")
+                    formated_results.append(result.payload['comment'] + ": on " + str(date_str))
+                
+            else:
+                if self.verbose:
+                    print("Not adding " + comment)
+            result_count += 1
+        return formated_results    
 
 
     def __repr__(self):
