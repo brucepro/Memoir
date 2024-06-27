@@ -24,3 +24,6 @@ nltk>=3.8.1 # not directly required, pinned by Snyk to avoid a vulnerability
 requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
 scikit-learn>=1.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
 anyio>=4.4.0 # not directly required, pinned by Snyk to avoid a vulnerability
+
+grpcio-status==1.62.2
+grpcio-tools==1.62.2
