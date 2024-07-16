@@ -17,7 +17,7 @@ webdriver_manager
 pillow>=10.3.0 # not directly required, pinned by Snyk to avoid a vulnerability
 transformers>=4.36.0 # not directly required, pinned by Snyk to avoid a vulnerability
 torch>=2.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
-setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
 wheel>=0.38.0 # not directly required, pinned by Snyk to avoid a vulnerability
 
 nltk>=3.8.1 # not directly required, pinned by Snyk to avoid a vulnerability
