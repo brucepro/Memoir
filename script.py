@@ -124,9 +124,9 @@ def state_modifier(state):
     Since we are adding to the bot prefix, they tend to get hung up on 
     using the prefix. Good spot to give extra instructions, but we need
     add the stop string. Also when the bot speaks as the user it is annoying,
-    so fix for that. 
+    so fix for that. Update 8/1/2024 Seems to not be useful anymore and most models are fine without it from my testing.
     '''
-    state['custom_stopping_strings'] = '"[AUGMENTED INFORMATION:","[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
+    #state['custom_stopping_strings'] = '"[AUGMENTED INFORMATION:","[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
     #params['state'] = state
     return state
 
