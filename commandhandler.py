@@ -102,10 +102,20 @@ class CommandHandler():
 
                     if is_url == False:
                         if os.path.exists(file):
-                            print("file exist")
-                            content = file_load_handler.read_file(file)
-                            self.command_output["FILE_LOAD"] = f"FILE_LOAD: {content}"
-
+                            print("Path exist")
+                            if os.path.isfile(file):
+                                print("Path leads to a file")
+                                content = file_load_handler.read_file(file)
+                                self.command_output["FILE_LOAD"] = f"FILE_LOAD: {content}"
+                            elif os.path.isdir(file):
+                                directory = file
+                                print("Path leads to a directory. This will skip adding to content due to likelihood of extreme length.")
+                                count = 0
+                                for file in os.listdir(directory): 
+                                    path = directory + file
+                                    file_load_handler.read_file(path)
+                                    count += 1
+                                self.command_output["FILE_LOAD"] = f"FILE_LOAD: Successfully ingested {count} total documents."
                         else:
                             print("File does not exist")
                             self.command_output["FILE_LOAD"] = f"FILE_LOAD: File doesn't exist"
