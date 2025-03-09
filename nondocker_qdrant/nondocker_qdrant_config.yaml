@@ -1,0 +1,13 @@
+log_level: INFO
+
+storage:
+  storage_path: ../storage/qdrant
+  snapshots_path: ../storage/snapshots
+
+service:
+  host: 0.0.0.0
+  port: 6333
+  enable_tls: false
+
+api:
+  port: 6333

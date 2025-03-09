@@ -4,35 +4,24 @@ script.py - main entrance of the script into the Text Generation Web UI system e
 Memoir+ a persona extension for Text Gen Web UI. 
 MIT License
 
-Copyright (c) 2024 brucepro
+Copyright (c) 2025 brucepro, corbin-hayden13
 """
 
 import os
-import re
-import random
 import gradio as gr
 import textwrap
 from datetime import datetime, timedelta 
-from modules import chat, shared, utils
+from modules import chat, utils
 from modules.text_generation import (
-    decode,
-    encode,
     generate_reply,
 )
-import pathlib
-import sqlite3
-import subprocess
-import itertools
-import time
 import json
 from python_on_whales import DockerClient
-
 
 from extensions.Memoir.commandhandler import CommandHandler
 from extensions.Memoir.chathelper import ChatHelper
 from extensions.Memoir.memory.short_term_memory import ShortTermMemory
-from extensions.Memoir.memory.long_term_memory import LTM
-from extensions.Memoir.rag.rag_data_memory import RagDataMemory
+from extensions.Memoir.big_memory.big_memory import LTM, RagDataMemory
 from extensions.Memoir.memory.dream import Dream
 from extensions.Memoir.persona.persona import Persona
 from extensions.Memoir.commands.file_load import File_Load
@@ -41,18 +30,19 @@ from extensions.Memoir.commands.file_load import File_Load
 current_dir = os.path.dirname(os.path.abspath(__file__))
 memoir_js = os.path.join(current_dir, "memoir.js")
 memoir_css = os.path.join(current_dir, "memoir.css")
-databasepath = os.path.join(current_dir, "storage/sqlite/") 
-
+databasepath = os.path.join(current_dir, "storage/sqlite/")
+params_txt = os.path.join(current_dir, "memoir_config.json")
 
 
 def save_params_to_file(arg):
+    global params_txt
+
     params_txt = os.path.join(current_dir, "memoir_config.json") 
     with open(params_txt, 'w') as f:
         json.dump(params, f)
-    pass
+
 
 def load_params_from_file(params_json):
-    
     if os.path.exists(params_json):
         with open(params_json) as config_file:
             config = json.load(config_file)
@@ -60,7 +50,6 @@ def load_params_from_file(params_json):
         config = {}
     return config
 
-params_txt = os.path.join(current_dir, "memoir_config.json")
 
 # Load the params dictionary from the confignew.json file
 params = load_params_from_file(params_txt)
@@ -77,7 +66,7 @@ def memory_insert():
     for memory in memory_text:
         if memory not in unique_memories:
             unique_memories.append(memory)
-    if params['verbose'] == True:
+    if params['verbose']:
         print("--------------Memories---------------------------")
         print(unique_memories)
         print("---------------End Memories--------------------------")
@@ -87,7 +76,8 @@ def memory_insert():
         return "[You remember:" + str(unique_memories) + " ] "
     else:
         return ""  
-    
+
+
 def rag_insert():
     """
     Handles the insertion of the RAG items into the chat.
@@ -101,6 +91,7 @@ def rag_insert():
         return "[Augumented Information:" + str(unique_rags) + " ] "
     else:
         return ""
+
 
 def state_modifier(state):
     """
@@ -126,8 +117,6 @@ def state_modifier(state):
     add the stop string. Also when the bot speaks as the user it is annoying,
     so fix for that. Update 8/1/2024 Seems to not be useful anymore and most models are fine without it from my testing.
     '''
-    #state['custom_stopping_strings'] = '"[AUGMENTED INFORMATION:","[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
-    #params['state'] = state
     return state
 
 
@@ -136,37 +125,35 @@ def bot_prefix_modifier(string, state):
     Modifies the prefix for the next bot reply in chat mode.
     By default, the prefix will be something like "Bot Name:".
     """
-    
-
     character_name = state["name2"].lower().strip()
     params['current_persona'] = state['name2'].strip()
-    databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
-    persona = Persona(databasefile)
+    database_file = os.path.join(databasepath, character_name + "_sqlite.db")
+    persona = Persona(database_file)
     current_time = datetime.now()
     datetime_obj = current_time
     date_str = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
     n = 24
     past_time = current_time - timedelta(hours=n)
     past_time_str = past_time.strftime('%Y-%m-%d %H:%M:%S.%f')
-    stm_polarity_data = persona.get_stm_polarity_timeframe(past_time_str)
-    bot_current_polarity = round((stm_polarity_data), 4)
+    stm_polarity_data: float = float(persona.get_stm_polarity_timeframe(past_time_str))
+    bot_current_polarity: float = round(stm_polarity_data, 4)
     params['polarity_score'] = bot_current_polarity
     string = "[DateTime=" + str(date_str) + "][24hour Average Polarity Score=" + str(bot_current_polarity) + "] " + string
     #insert rag into prefix
     if params['botprefix_rag_enabled'] == "Enabled":
-        if params['rag_active'] == True: 
+        if params['rag_active']:
             string = str(rag_insert()) + string
 
     #insert memories into prefix.
     if params['botprefix_mems_enabled'] == "Enabled":
-        if params['memory_active'] == True: 
+        if params['memory_active']:
             string = str(memory_insert()) + string
             #print(string)    
     return string
 
 
 
-def input_modifier(string, state, is_chat=False):
+def input_modifier(string, state):
     """
     In default/notebook modes, modifies the whole prompt.
 
@@ -175,57 +162,49 @@ def input_modifier(string, state, is_chat=False):
     """
     #vars
     #we need to pass state to some of our buttons. Need to think of a better way.
-    
-    character_name = str(state["name2"].lower().strip())
+    global params
+
     params['current_persona'] = state['name2'].strip()
-    collection = state['name2'].strip()
-    databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
-    stm = ShortTermMemory(databasefile)
-    
-    commands_output = None    
+    character_name = params["current_persona"].lower()
+    database_file = os.path.join(databasepath, character_name + "_sqlite.db")
+    stm = ShortTermMemory(database_file)
+
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
-        handler = CommandHandler(databasefile,collection)
+        handler = CommandHandler(database_file, params)
         commands_output = handler.process_command(string)
-        if params['verbose'] == True:
+        if params['verbose']:
             print("---------COMMANDS OUTPUT----------------")
             print(commands_output)
             print("/////////--------COMMANDS OUTPUT----------------")
 
         #STM Save of user input.
-        people = state['name1'].strip() + " and " + state["name2"].strip()
-        is_roleplay = params['is_roleplay']
+        people = state['name1'].strip() + " and " + params['current_persona']
         initiated_by_name = state['name1'].strip()
         
-        if params['activate_narrator'] == True:
-            if ChatHelper.check_if_narration(string) == True:
+        if params['activate_narrator']:
+            if ChatHelper.check_if_narration(string):
                 initiated_by_name = "Narrator"
                 
         if len(string) != 0:
-            if params['memory_active'] == True:
-                stm.save_memory(string, people, memory_type='short_term', initiated_by=initiated_by_name, roleplay=is_roleplay)
+            if params['memory_active']:
+                stm.save_memory(string, people, memory_type='short_term', initiated_by=initiated_by_name, roleplay=params['is_roleplay'])
         
         #inserts the qdrant vector db results from the previous bot reply and the current input.
-        collection = state['name2'].strip()
-        username = state['name1'].strip()
-        verbose = params['verbose']
-        ltm_limit = params['ltm_limit']
-        rag_limit = params['rag_limit']
-        address = params['qdrant_address']
-        ltm = LTM(collection, ltm_limit, verbose, address=address)
+        ltm = LTM(params)
         params['user_long_term_memories'] = ltm.recall(string)
-        rag = RagDataMemory(collection,rag_limit,verbose, address=address)
+        rag = RagDataMemory(params)
         params['user_rag_data'] = rag.recall(string)
         
         if len(commands_output) > 0:
             string = string + " [" + str(commands_output) + "]"    
         #insert rag into prefix
         if params['botprefix_rag_enabled'] == "Disabled":
-            if params['rag_active'] == True: 
+            if params['rag_active']:
                 string = str(rag_insert()) + string
         #insert memories into prefix.
         if params['botprefix_mems_enabled'] == "Disabled":
-            if params['memory_active'] == True: 
+            if params['memory_active']:
                 string = str(memory_insert()) + string   
         print("--------current context string input modifier---------------")
         print(string)
@@ -245,44 +224,37 @@ def output_modifier(string, state, is_chat=False):
     character_name = state["name2"].lower().strip()
     params['current_persona'] = state['name2'].strip()
     collection = state['name2'].strip()
-    databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
+    database_file = os.path.join(databasepath, character_name + "_sqlite.db")
     commands_output = None    
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
         #handle [command]'s from the bot
-        handler = CommandHandler(databasefile,collection)
+        handler = CommandHandler(database_file,collection)
         commands_output = handler.process_command(string)
     
         #STM Save of user input.
         people = state['name1'].strip() + " and " + state["name2"].strip()
         is_roleplay = params['is_roleplay']
         initiated_by_name = state['name2'].strip()
-        if params['activate_narrator'] == True:
-            if ChatHelper.check_if_narration(string) == True:
+        if params['activate_narrator']:
+            if ChatHelper.check_if_narration(string):
                 #print("STM is a narration")
                 initiated_by_name = "Narrator"
          
-        stm = ShortTermMemory(databasefile)
-        if params['memory_active'] == True:
+        stm = ShortTermMemory(database_file)
+        if params['memory_active']:
             stm.save_memory(string, people, memory_type='short_term', initiated_by=initiated_by_name, roleplay=is_roleplay)
         
         #Long-Term-Memory Insert
         #uses the last bot reply and adds it to the input.
-        collection = state['name2'].strip()
-        username = state['name1'].strip()
-        verbose = params['verbose']
-        ltm_limit = params['ltm_limit']
-        rag_limit = params['rag_limit']
-        address = params['qdrant_address']
-        ltm = LTM(collection, ltm_limit, verbose,  address=address)
+        ltm = LTM(params)
         params['bot_long_term_memories'] = ltm.recall(string)
-        rag = RagDataMemory(collection,rag_limit,verbose, address=address)
+        rag = RagDataMemory(params)
         params['bot_rag_data'] = rag.recall(string)
     if params['dream_mode'] == 0:
         #add the output of commands
         if len(commands_output) > 0:
             string = string + str(commands_output)    
-    
 
     return string
 
@@ -298,24 +270,18 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     it uses the current loaded model, so generation when LTM's are being 
     saved is a bit longer. 
     '''
-    if params['memory_active'] == True:
+    global params
+
+    if params['memory_active']:
         character_name = state["name2"].lower().strip()
         params['current_persona'] = state['name2'].strip()
-        databasefile = os.path.join(databasepath, character_name + "_sqlite.db")
-        dream = Dream(databasefile)
-        persona = Persona(databasefile)
-        stm_user = ShortTermMemory(databasefile)
-        #this should remain around 10 or so so that the conversation flow is recorded. But things happen.
+        database_file = os.path.join(databasepath, character_name + "_sqlite.db")
+        dream = Dream(database_file)
+        stm_user = ShortTermMemory(database_file)
+        #this should remain around 10 so that the conversation flow is recorded. But things happen.
 
         mems_to_review = dream.get_short_term_memories_not_indexed(int(params['ego_summary_limit']))
-        collection = state['name2'].strip()
-        username = state['name1'].strip()
-        verbose = params['verbose']
-        ltm_limit = params['ltm_limit']
-        address = params['qdrant_address']
-        ltm = LTM(collection,ltm_limit,verbose, address=address)
-        dream_check = 0
-        #print("Len of not indexed mems:" + str(len(mems_to_review)))
+        ltm = LTM(params)
         
 
         if len(mems_to_review) >= int(params['ego_summary_limit']):
@@ -329,23 +295,21 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
           
             people = []
             memory_text = []
-            emotions = []
             dream_check = 0
             roleplay_message = ""
             for row in mems_to_review:
-                if int(row[6]) == 0:
-                    roleplay = False
+                # roleplay = False if row[6] == 0 anyway
+                roleplay: bool = False
                 if int(row[6]) == 1:
                     roleplay = True
-                if roleplay == True:
+                if roleplay:
                     roleplay_message = "(These memories are part of a roleplay session, note that it was part of a roleplay in the memory summary.)"
-                #print("Innitiated by:" + row[5])
+
                 if str(row[5]) == "Narrator":
                     memory_text.append(f"{row[1]}")
                 else:
                     memory_text.append(f"{row[5]}: {row[1]}")
                 people.append(row[3])
-                
 
             unique_memories = []
             for memory in memory_text:
@@ -368,11 +332,11 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             
             question = bot_dream_persona + stm_context_string + "[MEMORIES:{'" + input_to_summarize + "'}] " + roleplay_message + thinking_statement
             
-            if params['verbose'] == True:
+            if params['verbose']:
                 print('-----------memory question-----------')
                 print(question)
                 print('-----------/memory question-----------')
-            response_text = []
+            response_text: list = []
             
             for response in generate_reply(question, state, stopping_strings='"<END>","</END>"', is_chat=False, escape_html=False, for_ui=False):
                 response_text.append(response) 
@@ -385,7 +349,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 for row in mems_to_review:
                     stm_user.update_mem_saved_to_longterm(row[0])
 
-            if params['verbose'] == True:
+            if params['verbose']:
                 print("----------Memory Summary to save--------------")
                 print(str(response_text[-1]))
                 print("----------")
@@ -396,10 +360,9 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                 tosave = str(response_text[-1]) + " " + str(roleplay_message)
                 botname = state['name2'].strip()
                 doc_to_upsert = {'username': botname,'comment': str(tosave),'datetime': now, 'people': str(unique_people)}
-                if params['verbose'] == True:
+                if params['verbose']:
                     print("Saving to Qdrant" + str(doc_to_upsert))
                 ltm.store(doc_to_upsert)
-                
 
             params['dream_mode'] = 0
         
@@ -431,6 +394,28 @@ def custom_js():
         
     return full_js
 
+
+def try_nondocker_qdrant():
+    """
+    If you don't want to run Text Generation WebUI in docker, you'll need to fulfill the Qdrant dependency for this
+        extension yourself.
+
+    1. Go to https://github.com/qdrant/qdrant/releases and download the latest compiled Qdrant binary
+        - Prebuilt binaries come as archive files (.zip, .tar, etc.) from GitHub
+    2. Unzip / unpack the binary into "./nondocker_qdrant"
+    3. (Optional, decreases load time) Set "qdrant_on_docker" to `false` in `./memoir_config.json`
+    4. (Optional) Double check that the "qdrant_address" from `./memoir_config.json` matches the
+        `./nondocker_qdrant/nondocker_qdrant_config.yaml` file data and that the port `6333` is being used EVERYWHERE
+    5. You're done!
+    """
+    from extensions.Memoir.nondocker_qdrant.start_nondocker_qdrant import start_qdrant_server
+    try:
+        start_qdrant_server()
+
+    except Exception as e:
+        print(f"Failed to launch qdrant with non-Docker approach: Error - {e}")
+
+
 def setup():
     """
     Gets executed only once, when the extension is imported.
@@ -442,14 +427,20 @@ def setup():
     qdrantdockerfile = os.path.join(current_dir, "qdrant-docker-compose.yml")
         
     # run the service
-    
-    try:
-        docker_qdrant = DockerClient(compose_files=[qdrantdockerfile])
-        docker_qdrant.compose.up(detach=True)
-            
-        print(f"Running the docker service...you can modify this in the docker-compose.yml: {qdrantdockerfile} . If you get an error here it is most likely that you forgot to load docker. I recommend docker desktop.")
-    except Exception as e:
-        print(f": Error {qdrantdockerfile}: {e}")
+    if params["qdrant_on_docker"]:
+        try:
+            docker_qdrant = DockerClient(compose_files=[qdrantdockerfile])
+            docker_qdrant.compose.up(detach=True)
+
+            print(
+                f"Running the docker service...you can modify this in the docker-compose.yml: {qdrantdockerfile} . If you get an error here it is most likely that you forgot to load docker. I recommend docker desktop.")
+        except:
+            # Try the non-docker approach EVEN IF it's not been set in the memoir_config file
+            print("Encountered error running qdrant in Docker, trying non-Docker approach...")
+            try_nondocker_qdrant()
+
+    else:
+        try_nondocker_qdrant()
 
 
 def update_dreammode():
@@ -457,10 +448,9 @@ def update_dreammode():
     print(str(params))
     pass
 
+
 def deep_dream():
     params['deep_dream'] = 1
-
-    pass
 
 
 def _get_current_memory_text() -> str:
@@ -468,36 +458,34 @@ def _get_current_memory_text() -> str:
     info = str(available_characters)
     return info
 
+
 def delete_everything():
-    
-    if params['current_selected_character'] == None:
+    global params
+
+    if params['current_selected_character'] is None:
         print("No persona selected.")
     else:
         character_name_lowercase = str(params['current_selected_character']).lower().strip()
-        character_name = params['current_selected_character']
         
-        databasefile = os.path.join(databasepath, character_name_lowercase + "_sqlite.db")
-        ltm = LTM(character_name, params['ltm_limit'], params['verbose'], address=params['qdrant_address'])
+        database_file = os.path.join(databasepath, character_name_lowercase + "_sqlite.db")
+        ltm = LTM(params)
         ltm.delete_vector_db()
-        utils.delete_file(databasefile)
-        
-    pass
+        utils.delete_file(database_file)
+
 
 def load_params_from_file_ui(arg):
     print("--------arg--------")
     print(arg)
     load_params_from_file(params_txt)
-    pass
+
 
 def rag_upload_file(file):
-    
-    #text = file.decode('utf-8')
     print(file)
     file_path = str(file.name)
     print("********FILEPATH*********")
     print(file_path)
     if params['current_persona'] != "":
-        file_load_handler = File_Load(params['current_persona'])
+        file_load_handler = File_Load(params)
                     
         content = file_load_handler.read_file(file_path)
         print("***********RAG FILE UPLOADED*************")
@@ -505,6 +493,7 @@ def rag_upload_file(file):
         print("**************************************")
     else:
         print("Current Persona is not selected, yet. Interact with your agent first. ")
+
     return 'File inserted into the RAG vector Store.'
 
 
@@ -560,7 +549,8 @@ def ui():
                     last_updated = gr.Markdown()
                     file_input = gr.File(label='Input file')
                     update_file = gr.Button('Load data')
-                    update_file.click(rag_upload_file, [file_input], last_updated, show_progress=True)
+                    # Assuming `True` means "full" in `show_progress` context
+                    update_file.click(rag_upload_file, [file_input], last_updated, show_progress="full")
                 with gr.Row():
                     rag_limit = gr.Slider(
                         1, 100,
