@@ -9,15 +9,23 @@ Memoir is an AI-powered plugin designed to enrich your existing AI companions wi
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Key Features](#key-features)
-- [Configuration](#configuration)
-- [Future Development](#future-development)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Support](#support)
-- [Contributing](#contributing)
-- [License](#license)
+- [Memoir+: Enhanced Persona Extension for Text Generation Web UI](#memoir-enhanced-persona-extension-for-text-generation-web-ui)
+  - [Introduction](#introduction)
+  - [Table of Contents](#table-of-contents)
+  - [Key Features](#key-features)
+  - [Configuration](#configuration)
+    - [Memory Settings](#memory-settings)
+    - [Ego Configuration](#ego-configuration)
+    - [Memory in Bot Prefix](#memory-in-bot-prefix)
+    - [Narration and Roleplay](#narration-and-roleplay)
+    - [Debugging and Memory Management](#debugging-and-memory-management)
+    - [Character Management](#character-management)
+  - [Future Development](#future-development)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Support](#support)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Key Features
 
@@ -86,13 +94,19 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 ## Installation
 
 1. Install the Text Generation Web UI as per instructions on [GitHub](https://github.com/oobabooga/text-generation-webui).
-2. Get Docker Desktop from [Docker](https://www.docker.com/products/docker-desktop/). (If for some reason you cannot load docker, you can bypass it by installing qdrant binary (https://github.com/qdrant/qdrant/releases) You can then comment out the docker loads in startup of script.py)
+2. Get Docker Desktop from [Docker](https://www.docker.com/products/docker-desktop/). ***Docker can be bypassed if you install Qdrant manually***:
+    1. Go to https://github.com/qdrant/qdrant/releases and download the latest compiled Qdrant binary
+        - Prebuilt binaries come as archive files (.zip, .tar, etc.) from GitHub
+    2. Unzip / unpack the binary file `qdrant.exe` into `./nondocker_qdrant`
+    3. (Optional, decreases load time) Set "qdrant_on_docker" to `false` in `./memoir_config.json`
+    4. (Optional) Double check that the "qdrant_address" from `./memoir_config.json` matches the
+        `./nondocker_qdrant/nondocker_qdrant_config.yaml` file data and that the port `6333` is being used EVERYWHERE
+    5. You're done!
 3. Clone the Memoir repository: `git clone https://github.com/brucepro/Memoir`.
 4. Move the Memoir folder into the extensions directory of your TextGenWebUI installation (Make sure it is named 'Memoir').
 5. Run the update_wizard bat for your OS. Select B) Install/update extensions requirements, Select Memoir from the list (or if you are familiar with terminal/CMD - from TextGenWebUI/extensions/Memoir folder, run `pip install -r requirements.txt --upgrade`).
 6. Restart Text Generation Web UI, goes to 'Session' tab - checked on Memoir, then 'Apply flags/extensions and restart'.
 7. Make sure Memoir extension load successfully from Text Generation Web UI console.
-
 
 ## Usage
 
