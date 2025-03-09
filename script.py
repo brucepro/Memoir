@@ -223,13 +223,12 @@ def output_modifier(string, state, is_chat=False):
     
     character_name = state["name2"].lower().strip()
     params['current_persona'] = state['name2'].strip()
-    collection = state['name2'].strip()
     database_file = os.path.join(databasepath, character_name + "_sqlite.db")
     commands_output = None    
     #used for processing [command]'s input by the user.
     if params['dream_mode'] == 0:
         #handle [command]'s from the bot
-        handler = CommandHandler(database_file,collection)
+        handler = CommandHandler(database_file, params)
         commands_output = handler.process_command(string)
     
         #STM Save of user input.

@@ -11,7 +11,7 @@ Copyright (c) 2025 brucepro, corbin-hayden13
 import random
 from datetime import datetime, timedelta
 from qdrant_client import models, QdrantClient
-from qdrant_client.http.models import PointStruct, QueryResponse
+from qdrant_client.http.models import PointStruct, QueryResponse, ScoredPoint
 from sentence_transformers import SentenceTransformer
 
 
@@ -95,12 +95,13 @@ class BigMemory:
             query=self.encoder.encode(query).tolist(),
             limit=self.ltm_limit + 1
         )
-        return self.format_results_from_qdrant(results)
+        return self.format_results_from_qdrant(results.points)
 
-    def format_results_from_qdrant(self, results: QueryResponse):
+    def format_results_from_qdrant(self, results: list[ScoredPoint]):
         formated_results = []
         seen_comments = set()
         result_count = 0
+        
         for result in results[1:]:
             comment = result.payload['comment']
             if comment not in seen_comments:
