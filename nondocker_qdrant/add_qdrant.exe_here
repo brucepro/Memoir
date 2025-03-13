@@ -1,1 +1,0 @@
-If you're not running docker, you can configure "qdrant_on_docker" to be `false` in `memoir_config.json` AND place a qdrant.exe file in this directory

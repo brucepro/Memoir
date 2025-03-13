@@ -4,13 +4,16 @@ ingest_file_class.py - implementation of the langchain loaders to parse the file
 Memoir+ a persona extension for Text Gen Web UI. 
 MIT License
 
-Copyright (c) 2025 brucepro, corbin-hayden13
+Copyright (c) 2024 brucepro
  
 """
 
+import os
+import re
+import unicodedata
+import langchain
 import langchain_community.document_loaders
 import pathlib
-
 
 class Ingest_File:
     def __init__(self, file, max_pages=None, max_time=None):
@@ -19,49 +22,98 @@ class Ingest_File:
         self.max_time = max_time
     
     def loadfile(self):
-        path_suffix: str = str(pathlib.Path(self.file).suffix)
-        print(f"File suffix to be processed: {path_suffix}")
+        processed = 0
+        print("File suffix to be processed:" + str(pathlib.Path(self.file).suffix))
+        if pathlib.Path(self.file).suffix == ".csv":
+            loader = langchain_community.document_loaders.CSVLoader(self.file)
 
-        match path_suffix:
-            case ".csv":
-                return langchain_community.document_loaders.CSVLoader(self.file)
+            data = loader.load()
+            processed = 1
+            return data
+        if pathlib.Path(self.file).suffix == ".txt":
+            loader = langchain_community.document_loaders.TextLoader(file_path=self.file,encoding='utf-8',autodetect_encoding=True)
+            document = loader.load()
+            processed = 1
+            return document
+        if pathlib.Path(self.file).suffix == ".xml":
+            loader = langchain_community.document_loaders.UnstructuredXMLLoader(self.file)
+            document = loader.load()
+            processed = 1
+            return document
 
-            case ".txt":
-                return langchain_community.document_loaders.TextLoader(file_path=self.file,encoding='utf-8',autodetect_encoding=True).load()
+        if pathlib.Path(self.file).suffix == ".md":
+            loader = langchain_community.document_loaders.UnstructuredMarkdownLoader(self.file)
+            document = loader.load()
+            processed = 1
+            return document
+        
+        if pathlib.Path(self.file).suffix == ".pdf":
+            loader = langchain_community.document_loaders.PyPDFLoader(self.file, extract_images=True)
+            pages = loader.load_and_split()
+            processed = 1
+            return pages
+        if pathlib.Path(self.file).suffix == ".epub":
+            loader = langchain_community.document_loaders.UnstructuredEPubLoader(self.file, mode="single", strategy="fast")
+            docs = loader.load();
+            processed = 1
+            return docs
+        if pathlib.Path(self.file).suffix == ".html":
+            loader = langchain_community.document_loaders.BSHTMLLoader(self.file, mode="single", strategy="fast")
+            docs = loader.load();
+            processed = 1
+            return docs
+        if pathlib.Path(self.file).suffix == ".xls":
+            loader = langchain_community.document_loaders.UnstructuredExcelLoader(self.file, mode="elements")
+            docs = loader.load();
+            processed = 1
+            return docs
+        if pathlib.Path(self.file).suffix == ".xlsx":
+            loader = langchain_community.document_loaders.UnstructuredExcelLoader(self.file, mode="elements")
+            docs = loader.load();
+            processed = 1
+            return docs
+        if pathlib.Path(self.file).suffix == ".ppt":
+            loader = langchain_community.document_loaders.UnstructuredPowerPointLoader(self.file, mode="elements")
+            data = loader.load();
+            processed = 1
+            return data
+        if pathlib.Path(self.file).suffix == ".pptx":
+            loader = langchain_community.document_loaders.UnstructuredPowerPointLoader(self.file, mode="elements")
+            data = loader.load();
+            processed = 1
+            return data
+        if pathlib.Path(self.file).suffix == ".doc":
+            loader = langchain_community.document_loaders.UnstructuredWordDocumentLoader(self.file, mode="elements")
+            data = loader.load();
+            processed = 1
+            return data
+        if pathlib.Path(self.file).suffix == ".docx":
+            loader = langchain_community.document_loaders.UnstructuredWordDocumentLoader(self.file, mode="elements")
+            data = loader.load();
+            processed = 1
+            return data
+        if pathlib.Path(self.file).suffix == ".vsdx":
+            loader = langchain_community.document_loaders.VsdxLoader(file_path=self.file)
+            data = loader.load();
+            processed = 1
+            return data
 
-            case ".xml":
-                return langchain_community.document_loaders.UnstructuredXMLLoader(self.file).load()
+        if pathlib.Path(self.file).suffix == ".odt":
+            loader = langchain_community.document_loaders.UnstructuredODTLoader(self.file, mode="elements")
+            data = loader.load();
+            processed = 1
+            return data
 
-            case ".md":
-                return langchain_community.document_loaders.UnstructuredMarkdownLoader(self.file).load()
-
-            case ".pdf":
-                return langchain_community.document_loaders.PyPDFLoader(self.file, extract_images=True).load_and_split()
-
-            case ".epub":
-                return langchain_community.document_loaders.UnstructuredEPubLoader(self.file, mode="single", strategy="fast").load()
-
-            case ".html":
-                # At present, mode="single" and strategy="fast" do nothing so I'll pass those to BeautifulSoup to deal with
-                return langchain_community.document_loaders.BSHTMLLoader(self.file, bs_kwargs={"mode": "single", "strategy": "fast"}).load()
-
-            case ".xls", ".xlsx":
-                return langchain_community.document_loaders.UnstructuredExcelLoader(self.file, mode="elements").load()
-
-            case ".ppt", ".pptx":
-                return langchain_community.document_loaders.UnstructuredPowerPointLoader(self.file, mode="elements").load()
-
-            case ".doc", ".docx":
-                return langchain_community.document_loaders.UnstructuredWordDocumentLoader(self.file, mode="elements").load()
-
-            case ".vsdx":
-                return langchain_community.document_loaders.VsdxLoader(file_path=self.file).load()
-
-            case ".odt":
-                return langchain_community.document_loaders.UnstructuredODTLoader(self.file, mode="elements").load()
-
-            case "":
-                return langchain_community.document_loaders.DirectoryLoader(self.file).load()
-
-            case _:  # Default
-                return langchain_community.document_loaders.UnstructuredFileLoader(self.file).load()
+        if pathlib.Path(self.file).suffix == "":
+            #defaults to unstructured loader so not as good as the specific loaders.
+            loader = langchain_community.document_loaders.DirectoryLoader(self.file)
+            documents = loader.load()
+            processed = 1
+            return documents
+        if processed == 0:
+            #defaults to unstructured loader so not as good as the specific loaders.
+            loader = langchain_community.document_loaders.UnstructuredFileLoader(self.file)
+            documents = loader.load()
+            processed = 1
+            return documents
+        pass
