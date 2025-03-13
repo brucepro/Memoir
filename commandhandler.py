@@ -4,60 +4,56 @@ commandhandler.py - main class that parses the chat and checks for commands to r
 Memoir+ a persona extension for Text Gen Web UI. 
 MIT License
 
-Copyright (c) 2025 brucepro, corbin-hayden13
+Copyright (c) 2024 brucepro
  
 """
 
-
+from extensions.Memoir.persona.persona import Persona
 from extensions.Memoir.commands.urlhandler import UrlHandler
 from extensions.Memoir.commands.file_load import File_Load
 
 import os
 import re
+from sqlite3 import connect
+import pathlib
 import validators
 
-class CommandHandler:
-    def __init__(self, db_path, memoir_config_params: dict):
+class CommandHandler():
+    def __init__(self, db_path, character_name):
         self.db_path = db_path
-        self.character_name = memoir_config_params['current_persona']
-        self.memoir_config_params = memoir_config_params
-
+        self.character_name = character_name
         self.commands = {}
         self.command_output = {}
 
     def process_command(self, input_string):
         pattern = r'\[([^\[\]]+)\]'
         commands_in_string = re.findall(pattern, input_string, re.IGNORECASE)
+        #print("Processing commands:" + str(commands_in_string))
  
         # Create an empty list to store the commands
         commands_list = []
         for cmd in commands_in_string:
-            if "=" in cmd:
-                print("Processing = command..." + str(cmd))
-                command_parts = cmd.split('=')
-
-                # Create a new dictionary object for this command
-                commands_list.append({
-                    command_parts[0]: {
-                        f"arg{i + 1}": arg
-                        for i, arg in enumerate(command_parts[1].split(','))
-                    }
-                })
-
-            elif ":" in cmd:
-                print("Processing : command..." + str(cmd))
-                command_parts = cmd.split(',')
-                # take each one and break it down.
-                for item in command_parts:
-                    command_parts2 = item.split(':')
+            command_processed=False
+            if command_processed==False:
+                if "=" in cmd:
+                    command_processed=True
+                    print("Processing = command..." + str(cmd))
+                    command_parts = cmd.split('=')
+                    
                     # Create a new dictionary object for this command
-                    if len(command_parts2) > 1:
-                        commands_list.append({
-                            command_parts2[0].strip(): {
-                                f"arg{i + 1}": arg.strip()
-                                for i, arg in enumerate(command_parts2[1].split(','))
-                            }
-                        })
+                    commands_list.append({command_parts[0]: {f"arg{i+1}": arg for i, arg in enumerate(command_parts[1].split(','))}})
+            if command_processed==False:
+                if ":" in cmd:
+                
+                    command_processed=True
+                    print("Processing : command..." + str(cmd))
+                    command_parts1 = cmd.split(',')
+                    #take each each one and break it down. 
+                    for item in command_parts1:
+                        command_parts2 = item.split(':')
+                        # Create a new dictionary object for this command
+                        if len(command_parts2) > 1:
+                            commands_list.append({command_parts2[0].strip(): {f"arg{i+1}": arg.strip() for i, arg in enumerate(command_parts2[1].split(','))}})
                    
         print("COMMANDS:" + str(commands_list))
         if len(commands_list) > 0:
@@ -71,7 +67,7 @@ class CommandHandler:
                 #URL related commands
                 if isinstance(cmd, dict) and "GET_URL" in cmd:
                     args = cmd["GET_URL"]
-                    handler = UrlHandler(self.memoir_config_params)
+                    handler = UrlHandler(self.character_name)
                     url =  str(args.get("arg1"))
                     
                     if args.get("arg2"):
@@ -97,7 +93,6 @@ class CommandHandler:
                     file_load_handler = File_Load(self.character_name)
                     validation = validators.url(file)
                     is_url = False
-
                     if validation:
                         print("File is url")
                         is_url = True
@@ -105,7 +100,7 @@ class CommandHandler:
                         self.command_output["FILE_LOAD"] = f"FILE_LOAD: {content}"
 
 
-                    if not is_url:
+                    if is_url == False:
                         if os.path.exists(file):
                             print("Path exist")
                             if os.path.isfile(file):
