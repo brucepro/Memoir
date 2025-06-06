@@ -93,7 +93,7 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 6. Restart Text Generation Web UI, goes to 'Session' tab - checked on Memoir, then 'Apply flags/extensions and restart'.
 7. Make sure Memoir extension load successfully from Text Generation Web UI console.
 
-
+For current text gen run: portable_env\python.exe -m pip install -r extensions\Memoir\requirements.txt
 ## Usage
 
 Configure your AI character's description if you like in the TextGen UI character tab. Engage in conversation, and watch as Memoir+ begins to store and utilize the generated memories, enhancing the interaction with your AI.
