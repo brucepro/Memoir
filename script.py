@@ -437,19 +437,9 @@ def setup():
 
     If for some reason you can't run docker, the system will work by installing the qdrant binaries 
     https://github.com/qdrant/qdrant/releases
-    As long as the server and port match in the memoir_config.json you should be good. Then comment out the docker stuff below or remove this entire function.
+    As long as the server and port match in the memoir_config.json you should be good. Gonna assume that qdrant is running.
     """
-    qdrantdockerfile = os.path.join(current_dir, "qdrant-docker-compose.yml")
-        
-    # run the service
-    
-    try:
-        docker_qdrant = DockerClient(compose_files=[qdrantdockerfile])
-        docker_qdrant.compose.up(detach=True)
-            
-        print(f"Running the docker service...you can modify this in the docker-compose.yml: {qdrantdockerfile} . If you get an error here it is most likely that you forgot to load docker. I recommend docker desktop.")
-    except Exception as e:
-        print(f": Error {qdrantdockerfile}: {e}")
+    pass
 
 
 def update_dreammode():
