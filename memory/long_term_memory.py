@@ -39,7 +39,9 @@ class LTM():
             print(f"addr:{self.address}, port:{self.port}")
 
         self.embedder = embedder
-        self. encoder = SentenceTransformer(self.embedder)
+        #self. encoder = SentenceTransformer(self.embedder)
+        #Force the embedder onto cpu to avoid cuda memory errors..consider adding a toggle in settings. 
+        self.encoder = SentenceTransformer(self.embedder, device='cpu')
         self.qdrant = QdrantClient(self.address, port=self.port)
         self.create_vector_db_if_missing()
 
