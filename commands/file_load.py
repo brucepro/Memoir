@@ -12,8 +12,7 @@ import os
 from datetime import datetime, timedelta
 from extensions.Memoir.rag.ingest_file_class import Ingest_File
 from extensions.Memoir.rag.rag_data_memory import RagDataMemory
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 class File_Load():
     def __init__(self, character_name):
