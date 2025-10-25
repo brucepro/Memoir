@@ -11,7 +11,7 @@ import langchain
 from datetime import datetime, timedelta
 from extensions.Memoir.rag.rag_data_memory import RagDataMemory
 from langchain_community.document_loaders import SeleniumURLLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 class UrlHandler():
     def __init__(self, character_name):
