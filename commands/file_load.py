@@ -1,7 +1,7 @@
 """
 file_load.py - handles the loading of files from the ui
 
-Memoir+ a persona extension for Text Gen Web UI. 
+Memoir+ a persona extension for Text Gen Web UI.
 MIT License
 
 Copyright (c) 2024 brucepro
@@ -10,8 +10,8 @@ Copyright (c) 2024 brucepro
 import requests
 import os
 from datetime import datetime, timedelta
-from extensions.Memoir.rag.ingest_file_class import Ingest_File
-from extensions.Memoir.rag.rag_data_memory import RagDataMemory
+from ..rag.ingest_file_class import Ingest_File
+from ..rag.rag_data_memory import RagDataMemory
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 class File_Load():

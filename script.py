@@ -12,7 +12,8 @@ import re
 import random
 import gradio as gr
 import textwrap
-from datetime import datetime, timedelta 
+import logging
+from datetime import datetime, timedelta
 from modules import chat, shared, utils
 from modules.text_generation import (
     decode,
@@ -25,17 +26,20 @@ import subprocess
 import itertools
 import time
 import json
-from python_on_whales import DockerClient
 
+# Setup logging
+logger = logging.getLogger("memoir")
+logging.basicConfig(level=logging.INFO)
 
-from extensions.Memoir.commandhandler import CommandHandler
-from extensions.Memoir.chathelper import ChatHelper
-from extensions.Memoir.memory.short_term_memory import ShortTermMemory
-from extensions.Memoir.memory.long_term_memory import LTM
-from extensions.Memoir.rag.rag_data_memory import RagDataMemory
-from extensions.Memoir.memory.dream import Dream
-from extensions.Memoir.persona.persona import Persona
-from extensions.Memoir.commands.file_load import File_Load
+# Use relative imports for compatibility with both standard and user_data locations
+from .commandhandler import CommandHandler
+from .chathelper import ChatHelper
+from .memory.short_term_memory import ShortTermMemory
+from .memory.long_term_memory import LTM
+from .rag.rag_data_memory import RagDataMemory
+from .memory.dream import Dream
+from .persona.persona import Persona
+from .commands.file_load import File_Load
 
 #globals
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -435,11 +439,55 @@ def setup():
     """
     Gets executed only once, when the extension is imported.
 
-    If for some reason you can't run docker, the system will work by installing the qdrant binaries 
-    https://github.com/qdrant/qdrant/releases
-    As long as the server and port match in the memoir_config.json you should be good. Gonna assume that qdrant is running.
+    Checks if Qdrant is available and provides helpful guidance if not.
+    Respects user's custom qdrant_address configuration.
     """
-    pass
+    try:
+        from qdrant_client import QdrantClient
+
+        # Get Qdrant address from user's config (memoir_config.json)
+        # Default to http://localhost:6333 if not configured
+        qdrant_address = params.get('qdrant_address', 'http://localhost:6333')
+
+        # Try to connect to Qdrant using configured address
+        try:
+            # QdrantClient can accept full URL like "http://localhost:6333"
+            # or separate host/port - it handles both
+            client = QdrantClient(url=qdrant_address)
+            collections = client.get_collections()
+            logger.info(f"✓ Qdrant connected successfully at {qdrant_address}")
+            logger.info(f"  Found {len(collections.collections)} existing collection(s)")
+        except Exception as e:
+            logger.warning("=" * 80)
+            logger.warning("⚠ QDRANT CONNECTION FAILED")
+            logger.warning("=" * 80)
+            logger.warning(f"Could not connect to Qdrant at {qdrant_address}")
+            logger.warning(f"Error: {e}")
+            logger.warning("")
+            logger.warning("Memoir+ requires Qdrant for vector memory storage.")
+            logger.warning("")
+            logger.warning("QUICK FIX - Choose ONE option:")
+            logger.warning("  Option A (Recommended): Install Docker Desktop")
+            logger.warning("    - Download: https://www.docker.com/products/docker-desktop/")
+            logger.warning("    - Run: docker run -p 6333:6333 qdrant/qdrant")
+            logger.warning("")
+            logger.warning("  Option B (No Docker): Install Qdrant Binary")
+            logger.warning("    - Download: https://github.com/qdrant/qdrant/releases")
+            logger.warning("    - Run the qdrant binary (will start on port 6333)")
+            logger.warning("")
+            logger.warning("If using custom Qdrant address, check memoir_config.json:")
+            logger.warning(f"  Current setting: {qdrant_address}")
+            logger.warning("")
+            logger.warning("After starting Qdrant, restart Text Generation WebUI.")
+            logger.warning("=" * 80)
+
+    except ImportError:
+        logger.error("=" * 80)
+        logger.error("⚠ MISSING DEPENDENCY: qdrant-client")
+        logger.error("=" * 80)
+        logger.error("Please install Memoir+ requirements:")
+        logger.error("  portable_env\\python.exe -m pip install -r user_data\\extensions\\Memoir\\requirements.txt")
+        logger.error("=" * 80)
 
 
 def update_dreammode():

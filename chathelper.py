@@ -1,14 +1,14 @@
 """
 chathelper.py - utils to help out parsing the chat
 
-Memoir+ a persona extension for Text Gen Web UI. 
+Memoir+ a persona extension for Text Gen Web UI.
 MIT License
 
 Copyright (c) 2024 brucepro
- 
+
 """
-from extensions.Memoir.persona.persona import Persona
-from extensions.Memoir.commands.urlhandler import UrlHandler
+from .persona.persona import Persona
+from .commands.urlhandler import UrlHandler
 import re
 from sqlite3 import connect
 import pathlib

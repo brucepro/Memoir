@@ -1,16 +1,16 @@
 """
 commandhandler.py - main class that parses the chat and checks for commands to run
 
-Memoir+ a persona extension for Text Gen Web UI. 
+Memoir+ a persona extension for Text Gen Web UI.
 MIT License
 
 Copyright (c) 2024 brucepro
- 
+
 """
 
-from extensions.Memoir.persona.persona import Persona
-from extensions.Memoir.commands.urlhandler import UrlHandler
-from extensions.Memoir.commands.file_load import File_Load
+from .persona.persona import Persona
+from .commands.urlhandler import UrlHandler
+from .commands.file_load import File_Load
 
 import os
 import re
@@ -111,8 +111,9 @@ class CommandHandler():
                                 directory = file
                                 print("Path leads to a directory. This will skip adding to content due to likelihood of extreme length.")
                                 count = 0
-                                for file in os.listdir(directory): 
-                                    path = directory + file
+                                for filename in os.listdir(directory):
+                                    # Fixed: Use os.path.join instead of string concatenation
+                                    path = os.path.join(directory, filename)
                                     file_load_handler.read_file(path)
                                     count += 1
                                 self.command_output["FILE_LOAD"] = f"FILE_LOAD: Successfully ingested {count} total documents."

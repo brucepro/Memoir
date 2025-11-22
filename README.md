@@ -85,18 +85,91 @@ Memoir offers detailed configuration options for personalizing your AI's memory 
 
 ## Installation
 
+### Prerequisites
 1. Install the Text Generation Web UI as per instructions on [GitHub](https://github.com/oobabooga/text-generation-webui).
-2. Get Docker Desktop from [Docker](https://www.docker.com/products/docker-desktop/). (If for some reason you cannot load docker, you can bypass it by installing qdrant binary (https://github.com/qdrant/qdrant/releases) You can then comment out the docker loads in startup of script.py)
-3. Clone the Memoir repository: `git clone https://github.com/brucepro/Memoir`.
-4. Move the Memoir folder into the extensions directory of your TextGenWebUI installation (Make sure it is named 'Memoir').
-5. Run the update_wizard bat for your OS. Select B) Install/update extensions requirements, Select Memoir from the list (or if you are familiar with terminal/CMD - from TextGenWebUI/extensions/Memoir folder, run `pip install -r requirements.txt --upgrade`).
-6. Restart Text Generation Web UI, goes to 'Session' tab - checked on Memoir, then 'Apply flags/extensions and restart'.
-7. Make sure Memoir extension load successfully from Text Generation Web UI console.
+2. **Qdrant Vector Database** (localhost:6333) - Choose ONE option:
 
-For current text gen run: portable_env\python.exe -m pip install -r extensions\Memoir\requirements.txt
+   **Option A - Docker (Recommended):**
+   - Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+   - Run: `docker run -p 6333:6333 qdrant/qdrant`
+
+   **Option B - Standalone Binary:**
+   - Download from [Qdrant Releases](https://github.com/qdrant/qdrant/releases)
+   - Run the binary (automatically starts on port 6333)
+
+   **Note:** Memoir+ will check Qdrant availability on startup and provide helpful guidance if not found.
+
+### Installation Steps
+3. Clone the Memoir repository:
+   ```bash
+   git clone https://github.com/brucepro/Memoir
+   ```
+
+4. Move the Memoir folder into the extensions directory of your TextGenWebUI installation (folder must be named 'Memoir').
+
+5. **Install Python dependencies:**
+
+   **For portable Text-generation-webui:**
+   ```bash
+   cd text-generation-webui-3.17
+   portable_env\python.exe -m pip install -r user_data\extensions\Memoir\requirements.txt
+   ```
+
+   **For standard installation:**
+   ```bash
+   cd text-generation-webui/extensions/Memoir
+   pip install -r requirements.txt --upgrade
+   ```
+
+   **Or use the update wizard:**
+   - Run the update_wizard bat for your OS
+   - Select B) Install/update extensions requirements
+   - Select Memoir from the list
+
+6. Restart Text Generation Web UI, go to 'Session' tab → check Memoir → 'Apply flags/extensions and restart'.
+
+7. Verify Memoir loaded successfully in the Text Generation Web UI console.
+
+### Qdrant Dashboard
+Access the Qdrant dashboard at http://localhost:6333/dashboard to:
+- View and manage your AI's vector memories
+- Create backups (snapshots) of your collections
+- Monitor memory usage and performance
 ## Usage
 
 Configure your AI character's description if you like in the TextGen UI character tab. Engage in conversation, and watch as Memoir+ begins to store and utilize the generated memories, enhancing the interaction with your AI.
+
+### Memory Management Utility
+
+Memoir+ includes a command-line utility for managing your character memories:
+
+```bash
+# List all collections and databases
+python memoir_utils.py list
+
+# View detailed stats for a character
+python memoir_utils.py stats <character_name>
+
+# Create a backup (saves Qdrant snapshots)
+python memoir_utils.py backup <character_name>
+
+# Export memories to human-readable text file
+python memoir_utils.py export <character_name> output.txt
+
+# Use custom Qdrant address
+python memoir_utils.py --qdrant http://remote-server:6333 list
+```
+
+**Examples:**
+```bash
+python memoir_utils.py stats AI
+python memoir_utils.py backup AI
+python memoir_utils.py export AI ai_memories.txt
+```
+
+**Backup Location:**
+- Qdrant snapshots: Accessible via Qdrant dashboard at http://localhost:6333/dashboard
+- SQLite backups: Saved to `backups/` folder in Memoir+ directory
  
 ## Support
 
@@ -108,6 +181,36 @@ If Memoir adds value to your AI experience and you'd like to show your appreciat
 ## Contributing
 
 Contributions, suggestions, and feedback are always welcome. Please submit issues or pull requests on GitHub, or contact us directly with your ideas and suggestions.
+
+## Changelog
+
+### Version 2024-11-22 - Stability & Bug Fixes
+**Critical Fixes:**
+- Fixed Qdrant API compatibility (updated to `query_points` API) - Resolves GitHub Issue #92
+- Fixed SQL injection vulnerability in dream.py memory processing
+- Fixed path concatenation bug in directory file loading
+- Added CUDA memory protection (force CPU for embeddings)
+- Removed Docker dependency - Qdrant can now run standalone
+- Fixed module import paths for text-generation-webui 3.17+ compatibility
+
+**New Features:**
+- **Memory Management Utility** (`memoir_utils.py`) - Command-line tool for:
+  - Listing all collections and databases
+  - Viewing detailed character statistics
+  - Creating backups (Qdrant snapshots + SQLite)
+  - Exporting memories to human-readable text files
+
+**Improvements:**
+- Added comprehensive error handling and logging throughout
+- Implemented retry logic with exponential backoff for Qdrant operations
+- Replaced random integer IDs with UUIDs for better uniqueness
+- All operations now gracefully degrade on failure (no crashes)
+- Added startup Qdrant availability check with helpful error messages
+- Improved installation documentation with portable text-gen-webui instructions
+
+**Backward Compatibility:**
+- All changes are backward compatible - existing installations work without modification
+- New features are opt-in with sensible defaults
 
 ## License
 

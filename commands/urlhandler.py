@@ -1,7 +1,7 @@
 """
 urlhandler.py - uses langchain to import the entire url into context and rag
 
-Memoir+ a persona extension for Text Gen Web UI. 
+Memoir+ a persona extension for Text Gen Web UI.
 MIT License
 
 Copyright (c) 2024 brucepro
@@ -9,7 +9,7 @@ Copyright (c) 2024 brucepro
 import requests
 import langchain
 from datetime import datetime, timedelta
-from extensions.Memoir.rag.rag_data_memory import RagDataMemory
+from ..rag.rag_data_memory import RagDataMemory
 from langchain_community.document_loaders import SeleniumURLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

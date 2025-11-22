@@ -22,17 +22,19 @@ class Dream():
 		self.cursor = self.conn.cursor()
 
 	def get_short_term_memories_not_indexed(self,limit):
+		"""Get unindexed STM using parameterized query (fixes SQL injection)"""
 		conn = sqlite3.connect(self.db_file)
 		cursor = conn.cursor()
-		cursor.execute(f"SELECT * FROM short_term_memory WHERE saved_to_longterm=0 LIMIT {limit}")
+		cursor.execute("SELECT * FROM short_term_memory WHERE saved_to_longterm=0 LIMIT ?", (limit,))
 		memories = cursor.fetchall()
 		conn.close()
 		return memories
-	
+
 	def long_form_summary(self,limit):
+		"""Get indexed STM using parameterized query (fixes SQL injection)"""
 		conn = sqlite3.connect(self.db_file)
 		cursor = conn.cursor()
-		cursor.execute(f"SELECT * FROM short_term_memory WHERE saved_to_longterm=1 LIMIT {limit}")
+		cursor.execute("SELECT * FROM short_term_memory WHERE saved_to_longterm=1 LIMIT ?", (limit,))
 		memories = cursor.fetchall()
 		conn.close()
 		return memories
