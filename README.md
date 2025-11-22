@@ -187,7 +187,6 @@ Contributions, suggestions, and feedback are always welcome. Please submit issue
 ### Version 2024-11-22 - Stability & Bug Fixes
 **Critical Fixes:**
 - Fixed Qdrant API compatibility (updated to `query_points` API) - Resolves GitHub Issue #92
-- Fixed SQL injection vulnerability in dream.py memory processing
 - Fixed path concatenation bug in directory file loading
 - Added CUDA memory protection (force CPU for embeddings)
 - Removed Docker dependency - Qdrant can now run standalone

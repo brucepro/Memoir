@@ -4,7 +4,7 @@ script.py - main entrance of the script into the Text Generation Web UI system e
 Memoir+ a persona extension for Text Gen Web UI. 
 MIT License
 
-Copyright (c) 2024 brucepro
+Copyright (c) 2025 brucepro
 """
 
 import os
@@ -31,7 +31,6 @@ import json
 logger = logging.getLogger("memoir")
 logging.basicConfig(level=logging.INFO)
 
-# Use relative imports for compatibility with both standard and user_data locations
 from .commandhandler import CommandHandler
 from .chathelper import ChatHelper
 from .memory.short_term_memory import ShortTermMemory
@@ -41,7 +40,6 @@ from .memory.dream import Dream
 from .persona.persona import Persona
 from .commands.file_load import File_Load
 
-#globals
 current_dir = os.path.dirname(os.path.abspath(__file__))
 memoir_js = os.path.join(current_dir, "memoir.js")
 memoir_css = os.path.join(current_dir, "memoir.css")
@@ -66,7 +64,6 @@ def load_params_from_file(params_json):
 
 params_txt = os.path.join(current_dir, "memoir_config.json")
 
-# Load the params dictionary from the confignew.json file
 params = load_params_from_file(params_txt)
 
 
@@ -124,14 +121,7 @@ def state_modifier(state):
     state['qdrant_address'] = params['qdrant_address']
     state['polarity_score'] = params['polarity_score']
     state['current_selected_character'] = params['current_selected_character']
-    '''
-    Since we are adding to the bot prefix, they tend to get hung up on 
-    using the prefix. Good spot to give extra instructions, but we need
-    add the stop string. Also when the bot speaks as the user it is annoying,
-    so fix for that. Update 8/1/2024 Seems to not be useful anymore and most models are fine without it from my testing.
-    '''
-    #state['custom_stopping_strings'] = '"[AUGMENTED INFORMATION:","[Augumented Information:","[DateTime=","[24hour Average Polarity Score=","' + str(state["name1"].strip()) + ':",' + state['custom_stopping_strings'] 
-    #params['state'] = state
+
     return state
 
 
@@ -323,7 +313,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         
 
         if len(mems_to_review) >= int(params['ego_summary_limit']):
-            print("--------------------------------------Enough memories for a dream...")
+            print("--------------------------------------Enough memories for a dream...enable verbose mode if you want to see the generation.")
             
             params['dream_mode'] = 1
             
@@ -455,11 +445,11 @@ def setup():
             # or separate host/port - it handles both
             client = QdrantClient(url=qdrant_address)
             collections = client.get_collections()
-            logger.info(f"✓ Qdrant connected successfully at {qdrant_address}")
+            logger.info(f"Qdrant connected successfully at {qdrant_address}")
             logger.info(f"  Found {len(collections.collections)} existing collection(s)")
         except Exception as e:
             logger.warning("=" * 80)
-            logger.warning("⚠ QDRANT CONNECTION FAILED")
+            logger.warning("QDRANT CONNECTION FAILED")
             logger.warning("=" * 80)
             logger.warning(f"Could not connect to Qdrant at {qdrant_address}")
             logger.warning(f"Error: {e}")
@@ -483,7 +473,7 @@ def setup():
 
     except ImportError:
         logger.error("=" * 80)
-        logger.error("⚠ MISSING DEPENDENCY: qdrant-client")
+        logger.error("MISSING DEPENDENCY: qdrant-client")
         logger.error("=" * 80)
         logger.error("Please install Memoir+ requirements:")
         logger.error("  portable_env\\python.exe -m pip install -r user_data\\extensions\\Memoir\\requirements.txt")
