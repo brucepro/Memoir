@@ -4,3 +4,4 @@ langchain-community
 textblob
 sentence_transformers
 validators
+wheel>=0.46.2 # not directly required, pinned by Snyk to avoid a vulnerability
